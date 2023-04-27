@@ -72,3 +72,7 @@ st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) 4473
 ```{r}
 ( joinHucRrkWip = st_join(joinHucRrk, wip_ab, largest=TRUE) )
 ```
+
+```{r}
+st_write(joinHucRrkWip, "../outputs/HucsRrkWip.shp", driver="ESRI Shapefile")
+```
