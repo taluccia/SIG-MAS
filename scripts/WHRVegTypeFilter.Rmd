@@ -1,0 +1,132 @@
+---
+title: "Veg Treatment Types"
+output: html_document
+---
+
+# Overview
+
+Filter vegetation treatment types by RRK and Treatable to create list of vegetation codes per RRK region. 
+
+# Packages
+```{r}
+library(tidyverse)
+```
+
+# Data
+```{r}
+data = read.csv("../data/WhrVegTypesTreatments.csv")
+```
+
+# Data overview
+```{r}
+head(data)
+```
+```{r}
+unique(data$region)
+```
+# Filter
+
+```{r}
+( 
+  sc = data %>% filter(region=="sc") %>% filter(treatment==1) %>% arrange(value)
+)
+```
+
+```{r}
+( 
+  nc = data %>% filter(region=="nc") %>% filter(treatment==1) %>% arrange(value)
+)
+```
+
+```{r}
+( 
+  cc = data %>% filter(region=="cc") %>% filter(treatment==1) %>% arrange(value)
+)
+```
+
+```{r}
+( 
+  sn = data %>% filter(region=="sn") %>% filter(treatment==1) %>% arrange(value)
+)
+```
+
+# Get unique values for veg type
+```{r}
+unique(sc$value)
+```
+```{r}
+cat(paste0(sprintf('%s', unique(sc$value)), collapse = ", "))
+```
+
+```{r}
+unique(nc$value)
+```
+
+```{r}
+cat(paste0(sprintf('%s', unique(nc$value)), collapse = ", "))
+```
+
+```{r}
+unique(cc$value)
+```
+```{r}
+cat(paste0(sprintf('%s', unique(cc$value)), collapse = ", "))
+```
+
+```{r}
+unique(sn$value)
+```
+```{r}
+cat(paste0(sprintf('%s', unique(sn$value)), collapse = ", "))
+```
+
+
+# Veg type
+
+```{r}
+unique(data$type)
+```
+
+```{r}
+( tree = data %>% 
+  filter(type =="Tree") %>% 
+    arrange(value)
+)
+```
+
+```{r}
+unique(tree$value)
+```
+```{r}
+cat(paste0(sprintf('%s', unique(tree$value)), collapse = ", "))
+```
+
+```{r}
+( shrub = data %>% 
+  filter(type =="Shrub") %>% 
+    arrange(value)
+  
+)
+```
+
+```{r}
+unique(shrub$value)
+```
+```{r}
+cat(paste0(sprintf('%s', unique(shrub$value)), collapse = ", "))
+```
+
+```{r}
+( herb = data %>% 
+  filter(type =="Herb") %>% 
+    arrange(value)
+)
+```
+
+```{r}
+unique(herb$value)
+```
+
+```{r}
+cat(paste0(sprintf('%s', unique(herb$value)), collapse = ", "))
+```

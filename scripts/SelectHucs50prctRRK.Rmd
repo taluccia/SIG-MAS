@@ -1,0 +1,74 @@
+---
+title: "Select Hucs with 50% overlap"
+output: html_document
+---
+
+# Overview
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+```
+
+# Data
+```{r}
+rrk = st_read("../data/RRK/RRK_boundaries3.shp", "RRK_boundaries3")
+```
+```{r}
+caHuc = st_read("../data/CAhuc/HucCA.shp", "HucCA")
+```
+```{r}
+cc = st_read("../data/huc12/CcHuc.shp", "CcHuc")
+nc = st_read("../data/huc12/NcHuc.shp", "NcHuc")
+sc = st_read("../data/huc12/ScHuc.shp", "ScHuc")
+sn = st_read("../data/huc12/SnHuc.shp", "SnHuc")
+```
+```{r}
+wip = sn = st_read("../data/WIP_Geographies/WIP_Geographies.shp", "WIP_Geographies")
+```
+
+# Select RRKs
+```{r}
+rrk_interest = rrk %>% filter(RRK_Region %in% c("Central Coast Region", "North Coast Region", "South Coast Region", "Sierra Nevada Region"))
+```
+```{r}
+ccRrk = rrk %>% filter(RRK_Region == "Central Coast Region")
+ncRrk = rrk %>% filter(RRK_Region == "North Coast Region")
+scRrk = rrk %>% filter(RRK_Region == "South Coast Region")
+snRrk = rrk %>% filter(RRK_Region == "Sierra Nevada Region")
+```
+
+# Select
+# Define projection
+```{r}
+projection = st_crs(rrk)
+```
+
+
+# Reproject HUCs
+
+```{r}
+caHuc_ab = st_transform(caHuc, projection)
+```
+
+```{r}
+wip_ab = st_transform(wip, projection)
+```
+
+```{r}
+cc_ab = st_transform(cc, projection)
+nc_ab = st_transform(nc, projection)
+sc_ab = st_transform(sc, projection)
+sn_ab = st_transform(sn, projection)
+```
+
+# Join and add attribute
+st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) 4473
+```{r}
+( joinHucRrk = st_join(caHuc_ab, rrk_interest, largest=TRUE) %>% 
+  drop_na(RRK_Region))
+```
+```{r}
+( joinHucRrkWip = st_join(joinHucRrk, wip_ab, largest=TRUE) )
+```

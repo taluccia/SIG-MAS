@@ -1,0 +1,38 @@
+---
+title: "RRK Summary Area for Herb Shrub Tree"
+output: html_document
+---
+
+# Overview
+Calculate percentage of area by Herb, Shrub, Tree from GEE outputs
+
+
+# Packages
+```{r}
+library(tidyverse)
+```
+
+# Data
+```{r}
+cc = read.csv("../data/ccRrkHST.csv")
+nc = read.csv("../data/ncRrkHST.csv")
+sc = read.csv("../data/scRrkHST.csv")
+sn = read.csv("../data/snRrkHST.csv")
+```
+
+```{r}
+( df = bind_rows(cc, nc, sc, sn) )
+```
+
+```{r}
+( dfPrct = df %>% 
+  mutate(herbPrct = (herbsumsqkm/vegsumsqkm)*100) %>%
+  mutate(shrubPrct = (shrubsumsqkm/vegsumsqkm)*100) %>%
+  mutate(treePrct = (treesumsqkm/vegsumsqkm)*100)
+)
+
+```
+
+```{r}
+write.csv(dfPrct, "../outputs/SumPercentHST.csv")
+```

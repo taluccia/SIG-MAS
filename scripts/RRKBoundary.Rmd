@@ -1,0 +1,31 @@
+---
+title: "RRK Boundaries"
+output: html_document
+---
+
+# Overview
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+```
+
+# Data
+```{r}
+rrk = st_read("../data/RRK/RRK_boundaries3.shp", "RRK_boundaries3")
+```
+pl <- st_cast(nc$geometry[[4]], "POLYGON")
+```{r}
+( select = rrk %>% 
+    filter(RRK_Region %in% c("Central Coast Region", "South Coast Region", "Sierra Nevada Region", "North Coast Region")) %>%
+    st_cast(., "POLYGON"))
+```
+
+```{r}
+(poly = st_cast(select$geometry, "POLYGON"))
+```
+
+```{r}
+st_write(poly, "../outputs/RRK_Select.shp", driver="ESRI Shapefile")
+```
