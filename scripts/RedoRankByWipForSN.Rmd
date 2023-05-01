@@ -1,0 +1,128 @@
+---
+title: "Redo ranks by WIP for SN"
+output: html_document
+---
+
+# Overview
+Calculate check for min max of percent rank, error in calculation
+
+Note: found error in EE code and fixed.
+
+
+# Packages
+```{r}
+library(tidyverse)
+library(skimr)
+```
+
+# Data
+
+## Shapefile
+```{r}
+hucs = st_read("../data/SelectedHucs/HucsRrkWip2.shp", "HucsRrkWip2")
+```
+
+## CSV from EE
+```{r}
+rank = read.csv("../data/csv/snHucTreat10WuiBpPrctRk_2023-04-29.csv")
+```
+
+# Look at data
+```{r}
+glimpse(rank)
+```
+
+
+```{r}
+skimr::skim(rank)
+```
+
+```{r}
+rank
+```
+# Update Ranks
+
+## Scale funtion
+To rescale and start at 1 instead of zero
+```{r}
+scale_rank = function(x) (x+1)
+```
+
+## Rescale
+```{r}
+(
+  rank1 = rank %>% 
+    dplyr::select(Acres, BpMean:RRK_Region, WIPGeoNam:areasqkm, huc12:hutype, name, states:sumsqkm) %>%
+    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, sum, sumsqkm), round, 3)) %>%
+    mutate(across(c(BpRank, WuiRank), scale_rank))
+)
+```
+df %>% arrange(team, points) %>%
+    group_by(team) %>%
+    mutate(rank = rank(points))
+
+
+  
+
+# Rank within WIPs
+```{r}
+( 
+  wipRanks = rank1 %>% 
+    arrange(BpRank) %>%
+    group_by(WIPGeoNam) %>%
+    mutate(BpRankWip = rank(BpRank)) %>%
+    ungroup() %>%
+    arrange(WuiRank) %>%
+    group_by(WIPGeoNam) %>%
+    mutate(WuiRankWip = rank(WuiRank))
+)
+  
+```
+```{r}
+wipRanks %>%
+    group_by(WIPGeoNam) %>%
+  dplyr::tally()
+```
+mutate(WipGroupSize = ifelse(WIPGeoNam == "East Side", 181,
+                          ifelse(WIPGeoNam == "Eldorado South", 178,
+                          ifelse(WIPGeoNam == "North East", 120,
+                          ifelse(WIPGeoNam == "North West - Pit", 140,
+                          ifelse(WIPGeoNam == "Sacramento - Feather", 185,
+                          ifelse(WIPGeoNam == "Southern", 255,
+                          ifelse(WIPGeoNam == "TCSI Plus", 130,26)))))))) 
+                          
+```{r}
+(
+  PrctRank = wipRanks %>%
+    group_by(WIPGeoNam) %>%
+    mutate(BpPrctWip = round(BpRankWip/n() *100, 2)) %>%
+    mutate(WuiPrctWip = round(WuiRankWip/n() *100, 2)) %>%
+    dplyr::select(WIPGeoNam, huc12, BpMean:BpRank, PropTreat:PropWui, WuiPrct:areasqkm, sum:WuiPrctWip)
+)
+```
+
+```{r}
+(
+  check = PrctRank %>%
+    group_by(WIPGeoNam) %>%
+    summarize(minBpPrctWip = min(BpPrctWip),
+            maxBpPrctWip = max(BpPrctWip),
+            minWuiPrctWip = min(WuiPrctWip),
+            maxWuiPrctWip = max(WuiPrctWip))
+)
+
+```
+
+# Select Shape file
+```{r}
+( sn = hucs %>% filter (RRK_Region =="Sierra Nevada Region") )
+```
+
+# join
+```{r}
+snPrctRank = merge(x = sn, y = PrctRank, by = "huc12", all = TRUE)
+```
+
+```{r}
+st_write(snPrctRank, "../outputs/snPrctRankWIP.shp", driver="ESRI Shapefile")
+```
