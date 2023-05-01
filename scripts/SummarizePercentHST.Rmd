@@ -4,15 +4,38 @@ output: html_document
 ---
 
 # Overview
-Calculate percentage of area by Herb, Shrub, Tree from GEE outputs
+This script takes the CSV output from EE and calculates the percent treatable herb, shrub, hardwood, and softwood by RRK.
 
 
 # Packages
 ```{r}
 library(tidyverse)
+library(skimr)
 ```
 
 # Data
+```{r}
+allHucs = read.csv("../data/AllHucsHST.csv")
+```
+2,944 rows
+```{r}
+glimpse(allHucs)
+```
+
+```{r}
+head(allHucs)
+```
+
+```{r}
+tail(allHucs)
+```
+```{r}
+unique(allHucs$RRK_Region)
+unique(allHucs$WIPGeoNam)
+```
+
+
+
 ```{r}
 cc = read.csv("../data/ccRrkHST.csv")
 nc = read.csv("../data/ncRrkHST.csv")
@@ -20,6 +43,60 @@ sc = read.csv("../data/scRrkHST.csv")
 sn = read.csv("../data/snRrkHST.csv")
 ```
 
+
+# By HUC and RRK And WIP
+
+```{r}
+( allHucs1 = allHucs %>% 
+    dplyr::select(RRK_Region, WIPGeoNam, herbsumsqkm, shrubsumsqkm, hardwoodsumsqkm, softwoodsumsqkm, vegsumsqkm) %>%
+  mutate(herbsumsqkm = round(herbsumsqkm, 2)) %>%
+  mutate(shrubsumsqkm = round(shrubsumsqkm, 2)) %>%
+  mutate(hardwoodsumsqkm = round(hardwoodsumsqkm, 2)) %>%
+  mutate(softwoodsumsqkm = round(softwoodsumsqkm, 2)) %>%
+   mutate(vegsumsqkm = round(vegsumsqkm, 2)) 
+    
+)
+
+```
+
+```{r}
+( allHucsPrct = allHucs1 %>% 
+    group_by(RRK_Region)  %>%
+  summarise(across(c(herbsumsqkm, shrubsumsqkm, hardwoodsumsqkm, softwoodsumsqkm, vegsumsqkm),sum),
+            .groups = 'drop') %>%
+  as.data.frame() %>%
+  mutate(herbPrct = round((herbsumsqkm/vegsumsqkm)*100, 2)) %>%
+  mutate(shrubPrct = round((shrubsumsqkm/vegsumsqkm)*100, 2)) %>%
+  mutate(hardwoodPrct = round((hardwoodsumsqkm/vegsumsqkm)*100, 2)) %>%
+  mutate(softwoodPrct = round((softwoodsumsqkm/vegsumsqkm)*100, 2))
+)
+```
+
+```{r}
+write.csv(allHucsPrct, "../outputs/AllHucsPercentHSTbyRRK.csv")
+```
+
+# by WIP
+```{r}
+( SNHucsArea = allHucs1 %>% 
+    filter(RRK_Region=="Sierra Nevada Region")  %>%
+    group_by(WIPGeoNam) %>%
+  summarise(across(c(herbsumsqkm, shrubsumsqkm, hardwoodsumsqkm, softwoodsumsqkm, vegsumsqkm),sum),
+            .groups = 'drop') %>%
+  as.data.frame() %>%
+  mutate(herbPrct = round((herbsumsqkm/vegsumsqkm)*100, 2)) %>%
+  mutate(shrubPrct = round((shrubsumsqkm/vegsumsqkm)*100, 2)) %>%
+  mutate(hardwoodPrct = round((hardwoodsumsqkm/vegsumsqkm)*100, 2)) %>%
+  mutate(softwoodPrct = round((softwoodsumsqkm/vegsumsqkm)*100, 2))
+)
+```
+
+```{r}
+write.csv(SNHucsArea, "../outputs/SNHucsPercentHSTbyWIP.csv")
+```
+
+
+# By RRK OLD
 ```{r}
 ( df = bind_rows(cc, nc, sc, sn) )
 ```

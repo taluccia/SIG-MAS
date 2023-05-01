@@ -5,7 +5,7 @@ output: html_document
 
 # Overview
 
-Filter vegetation treatment types by RRK and Treatable to create list of vegetation codes per RRK region. 
+This script is filtering treatable vegetation types and printing those values as a list for each RRK that is copied and pasted into EE script.
 
 # Packages
 ```{r}
@@ -17,37 +17,69 @@ library(tidyverse)
 data = read.csv("../data/WhrVegTypesTreatments.csv")
 ```
 
+```{r}
+dataHS = read.csv("../data/WHRVegTypesHardSoft.csv")
+```
+
 # Data overview
 ```{r}
-head(data)
+head(dataHS)
 ```
 ```{r}
-unique(data$region)
+unique(dataHS$region)
 ```
 # Filter
 
+## For treatments by RRK
+
+## SC
 ```{r}
 ( 
-  sc = data %>% filter(region=="sc") %>% filter(treatment==1) %>% arrange(value)
+  sc = dataHS %>% filter(region=="sc") %>% filter(treatment==1) %>% arrange(value)
+)
+```
+```{r}
+unique(sc$value)
+```
+```{r}
+cat(paste0(sprintf('%s', unique(sc$value)), collapse = ", "))
+```
+## NC
+```{r}
+( 
+  nc = dataHS %>% filter(region=="nc") %>% filter(treatment==1) %>% arrange(value)
+)
+```
+```{r}
+unique(nc$value)
+```
+```{r}
+cat(paste0(sprintf('%s', unique(nc$value)), collapse = ", "))
+```
+## CC
+```{r}
+( 
+  cc = dataHS %>% filter(region=="cc") %>% filter(treatment==1) %>% arrange(value)
+)
+```
+```{r}
+unique(cc$value)
+```
+```{r}
+cat(paste0(sprintf('%s', unique(cc$value)), collapse = ", "))
+```
+## SN
+```{r}
+( 
+  sn = dataHS %>% filter(region=="sn") %>% filter(treatment==1) %>% arrange(value)
 )
 ```
 
 ```{r}
-( 
-  nc = data %>% filter(region=="nc") %>% filter(treatment==1) %>% arrange(value)
-)
+unique(sn$value)
 ```
-
 ```{r}
-( 
-  cc = data %>% filter(region=="cc") %>% filter(treatment==1) %>% arrange(value)
-)
-```
-
-```{r}
-( 
-  sn = data %>% filter(region=="sn") %>% filter(treatment==1) %>% arrange(value)
-)
+cat(paste0(sprintf('%s', unique(sn$value)), collapse = ", "))
 ```
 
 # Get unique values for veg type
@@ -84,9 +116,72 @@ cat(paste0(sprintf('%s', unique(sn$value)), collapse = ", "))
 # Veg type
 
 ```{r}
-unique(data$type)
+unique(dataHS$type)
+```
+## New
+```{r}
+( softwood = dataHS %>% 
+    filter(treatment==1) %>%
+  filter(type =="Softwood") %>% 
+    arrange(value)
+)
 ```
 
+```{r}
+unique(softwood$value)
+```
+```{r}
+cat(paste0(sprintf('%s', unique(softwood$value)), collapse = ", "))
+```
+
+```{r}
+( hardwood = dataHS %>% 
+    filter(treatment==1) %>%
+  filter(type =="Hardwood") %>% 
+    arrange(value)
+)
+```
+
+```{r}
+unique(hardwood$value)
+```
+```{r}
+cat(paste0(sprintf('%s', unique(hardwood$value)), collapse = ", "))
+```
+
+```{r}
+( shrub = dataHS %>% 
+    filter(treatment==1) %>%
+  filter(type =="Shrub") %>% 
+    arrange(value)
+  
+)
+```
+
+```{r}
+unique(shrub$value)
+```
+```{r}
+cat(paste0(sprintf('%s', unique(shrub$value)), collapse = ", "))
+```
+
+```{r}
+( herb = dataHS %>% 
+    filter(treatment==1) %>%
+  filter(type =="Herb") %>% 
+    arrange(value)
+)
+```
+
+```{r}
+unique(herb$value)
+```
+
+```{r}
+cat(paste0(sprintf('%s', unique(herb$value)), collapse = ", "))
+```
+
+## Old
 ```{r}
 ( tree = data %>% 
   filter(type =="Tree") %>% 

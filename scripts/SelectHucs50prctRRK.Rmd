@@ -16,6 +16,9 @@ library(sf)
 rrk = st_read("../data/RRK/RRK_boundaries3.shp", "RRK_boundaries3")
 ```
 ```{r}
+plot(st_geometry(rrk))
+```
+```{r}
 caHuc = st_read("../data/CAhuc/HucCA.shp", "HucCA")
 ```
 ```{r}
@@ -38,6 +41,7 @@ ncRrk = rrk %>% filter(RRK_Region == "North Coast Region")
 scRrk = rrk %>% filter(RRK_Region == "South Coast Region")
 snRrk = rrk %>% filter(RRK_Region == "Sierra Nevada Region")
 ```
+
 
 # Select
 # Define projection
@@ -63,16 +67,25 @@ sc_ab = st_transform(sc, projection)
 sn_ab = st_transform(sn, projection)
 ```
 
+# Sn with wip
+```{r}
+plot(st_geometry(snRrk))
+plot(st_geometry(wip_ab),col="red", add=TRUE)
+```
 # Join and add attribute
 st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) 4473
 ```{r}
-( joinHucRrk = st_join(caHuc_ab, rrk_interest, largest=TRUE) %>% 
-  drop_na(RRK_Region))
+( joinHucRrk = st_join(caHuc_ab, rrk, largest=TRUE))
 ```
 ```{r}
 ( joinHucRrkWip = st_join(joinHucRrk, wip_ab, largest=TRUE) )
 ```
 
+
 ```{r}
-st_write(joinHucRrkWip, "../outputs/HucsRrkWip.shp", driver="ESRI Shapefile")
+( aoi = joinHucRrkWip %>% filter(RRK_Region %in% c("Central Coast Region", "North Coast Region", "South Coast Region", "Sierra Nevada Region"))
+)
+```
+```{r}
+st_write(aoi, "../outputs/HucsRrkWip2.shp", driver="ESRI Shapefile")
 ```
