@@ -2,6 +2,17 @@
 
 # Overview
 
+This repo contain scripts for pre and post processing of HUC data for the MAS project.
+
+Pre processing takes original HUC data downloaded from the [USGS](https://apps.nationalmap.gov/downloader/) using a polygon that extended beyond the California Border. HUCs were then select by joining with RRK shapefile and  WIP shapefile, using the greatest overlap. 
+
+The HUC shapefile is then fed into EE to identify HUCs with 10% treatable area and calculate the burn probability and percent WUI per HUC. In EE each HUC is then ranked by burn probability and percent WUI. 
+
+HUCs are exported from EE to receive addition processing R. The ranking in EE started at zero, and are adjusted in R to start at 1. Additionally, for the SN RRK, which include the WIP regions, the HUCs are ranked again within each WIP region.
+
+Finally, the HUCs are used to calculate the area of Herb, Shrub, Hardwood, and softwood from the treatable area layer in EE. This data is exportted from EE as a csv and then calculated as a percent in R.
+
+
 # Description of Scripts
 
 ## SelectHucs50prctRRK.Rmd
@@ -22,7 +33,7 @@ This script was use to look into an issue with the data, which has been fixed.
 
 ## WHRVegTypeFilter.Rmd
 
-This script is filtering treatable vegetation types and printing those values for each RRK.
+This script is filtering treatable vegetation types and printing those values for each RRK. Those values are then used in EE.
 
 ## RRKBoundary.Rmd
 
