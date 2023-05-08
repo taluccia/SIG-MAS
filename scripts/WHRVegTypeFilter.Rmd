@@ -14,11 +14,11 @@ library(tidyverse)
 
 # Data
 ```{r}
-data = read.csv("../data/WhrVegTypesTreatments.csv")
+data = read.csv("../data/WHRVegTypes/WhrVegTypesTreatments.csv")
 ```
 
 ```{r}
-dataHS = read.csv("../data/WHRVegTypesHardSoft.csv")
+dataHS = read.csv("../data/WHRVegTypes/WHRVegTypesHardSoft.csv")
 ```
 
 # Data overview
