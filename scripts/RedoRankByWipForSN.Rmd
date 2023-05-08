@@ -19,26 +19,39 @@ library(skimr)
 
 ## Shapefile
 ```{r}
-hucs = st_read("../data/SelectedHucs/HucsRrkWip2.shp", "HucsRrkWip2")
+hucs = st_read("../data/SelectedHucs/HucsRrkWip.shp", "HucsRrkWip")
 ```
 
 ## CSV from EE
 ```{r}
-rank = read.csv("../data/csv/snHucTreat10WuiBpPrctRk_2023-04-29.csv")
+sn = read.csv("../data/RrkCsv/snHucTreat10WuiBpPrctRk_2023-05-07.csv")
+```
+
+## CSV from EE
+```{r}
+cc = read.csv("../data/RrkCsv/ccHucTreat10WuiBpPrctRk_2023-05-07.csv")
+nc = read.csv("../data/RrkCsv/ncHucTreat10WuiBpPrctRk_2023-05-07.csv")
+sc = read.csv("../data/RrkCsv/scHucTreat10WuiBpPrctRk_2023-05-07.csv")
 ```
 
 # Look at data
 ```{r}
-glimpse(rank)
+glimpse(sn)
+```
+
+```{r}
+glimpse(cc)
+glimpse(nc)
+glimpse(sc)
 ```
 
 
 ```{r}
-skimr::skim(rank)
+skimr::skim(sn)
 ```
 
 ```{r}
-rank
+sn
 ```
 # Update Ranks
 
@@ -48,21 +61,51 @@ To rescale and start at 1 instead of zero
 scale_rank = function(x) (x+1)
 ```
 
-## Rescale
+## Rescale Within RRK
 ```{r}
 (
-  rank1 = rank %>% 
+  sn1 = sn %>% 
     dplyr::select(Acres, BpMean:RRK_Region, WIPGeoNam:areasqkm, huc12:hutype, name, states:sumsqkm) %>%
     mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, sum, sumsqkm), round, 3)) %>%
-    mutate(across(c(BpRank, WuiRank), scale_rank))
+    mutate(across(c(BpRank, WuiRank), scale_rank)) %>%
+    mutate(BpPrct = round(BpRank/n() *100, 2)) %>%
+    mutate(WuiPrct = round(WuiRank/n() *100, 2))
 )
 ```
-df %>% arrange(team, points) %>%
-    group_by(team) %>%
-    mutate(rank = rank(points))
+
+```{r}
+(
+  cc1 = cc %>% 
+    dplyr::select(Acres, BpMean:RRK_Region, WIPGeoNam:areasqkm, huc12:hutype, name, states:sumsqkm) %>%
+    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, sum, sumsqkm), round, 3)) %>%
+    mutate(across(c(BpRank, WuiRank), scale_rank)) %>%
+    mutate(BpPrct = round(BpRank/n() *100, 2)) %>%
+    mutate(WuiPrct = round(WuiRank/n() *100, 2))
+)
+```
 
 
-  
+```{r}
+(
+  nc1 = nc %>% 
+    dplyr::select(Acres, BpMean:RRK_Region, WIPGeoNam:areasqkm, huc12:hutype, name, states:sumsqkm) %>%
+    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, sum, sumsqkm), round, 3)) %>%
+    mutate(across(c(BpRank, WuiRank), scale_rank)) %>%
+    mutate(BpPrct = round(BpRank/n() *100, 2)) %>%
+    mutate(WuiPrct = round(WuiRank/n() *100, 2))
+)
+```
+
+```{r}
+(
+  sc1 = sc %>% 
+    dplyr::select(Acres, BpMean:RRK_Region, WIPGeoNam:areasqkm, huc12:hutype, name, states:sumsqkm) %>%
+    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, sum, sumsqkm), round, 3)) %>%
+    mutate(across(c(BpRank, WuiRank), scale_rank)) %>%
+    mutate(BpPrct = round(BpRank/n() *100, 2)) %>%
+    mutate(WuiPrct = round(WuiRank/n() *100, 2))
+)
+```
 
 # Rank within WIPs
 ```{r}
@@ -93,17 +136,16 @@ mutate(WipGroupSize = ifelse(WIPGeoNam == "East Side", 181,
                           
 ```{r}
 (
-  PrctRank = wipRanks %>%
+  wipRanks1 = wipRanks %>%
     group_by(WIPGeoNam) %>%
     mutate(BpPrctWip = round(BpRankWip/n() *100, 2)) %>%
-    mutate(WuiPrctWip = round(WuiRankWip/n() *100, 2)) %>%
-    dplyr::select(WIPGeoNam, huc12, BpMean:BpRank, PropTreat:PropWui, WuiPrct:areasqkm, sum:WuiPrctWip)
+    mutate(WuiPrctWip = round(WuiRankWip/n() *100, 2)) 
 )
 ```
 
 ```{r}
 (
-  check = PrctRank %>%
+  check = wipRanks1 %>%
     group_by(WIPGeoNam) %>%
     summarize(minBpPrctWip = min(BpPrctWip),
             maxBpPrctWip = max(BpPrctWip),
@@ -115,14 +157,49 @@ mutate(WipGroupSize = ifelse(WIPGeoNam == "East Side", 181,
 
 # Select Shape file
 ```{r}
-( sn = hucs %>% filter (RRK_Region =="Sierra Nevada Region") )
+( sn_rrk = hucs %>% filter (RRK_Region =="Sierra Nevada Region") %>% dplyr::select(huc12))
+( cc_rrk = hucs %>% filter (RRK_Region =="Central Coast Region") %>% dplyr::select(huc12))
+( nc_rrk = hucs %>% filter (RRK_Region =="North Coast Region") %>% dplyr::select(huc12))
+( sc_rrk = hucs %>% filter (RRK_Region =="Sout Coast Region") %>% dplyr::select(huc12))
 ```
 
 # join
 ```{r}
-snPrctRank = merge(x = sn, y = PrctRank, by = "huc12", all = TRUE)
+( snPrctRank = merge(x = sn_rrk, y = wipRanks1, by = "huc12", all = TRUE) )
 ```
 
 ```{r}
+( ccPrctRank = merge(x = cc_rrk, y = cc1, by = "huc12", all = TRUE) )
+```
+
+```{r}
+( ncPrctRank = merge(x = nc_rrk, y = nc1, by = "huc12", all = TRUE) )
+```
+
+```{r}
+( scPrctRank = merge(x = sc_rrk, y = sc1, by = "huc12", all = TRUE) )
+```
+# Head data frame
+```{r}
+glimpse(ccPrctRank)
+glimpse(ncPrctRank)
+glimpse(scPrctRank)
+glimpse(snPrctRank)
+```
+```{r}
+scPrctRank = scPrctRank %>% mutate(huc12 = as.character(huc12))
+```
+# Bind rows into one shapefile
+
+```{r}
+( allData = bind_rows(ccPrctRank, ncPrctRank, scPrctRank, snPrctRank) )
+```
+
+
+# Write to shp
+```{r}
 st_write(snPrctRank, "../outputs/snPrctRankWIP.shp", driver="ESRI Shapefile")
+```
+```{r}
+st_write(allData, "../outputs/allHucsPrctRankWIP.shp", driver="ESRI Shapefile")
 ```
