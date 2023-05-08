@@ -12,71 +12,92 @@ library(sf)
 ```
 
 # Data
+## RRK
 ```{r}
 rrk = st_read("../data/RRK/RRK_boundaries3.shp", "RRK_boundaries3")
 ```
-```{r}
-plot(st_geometry(rrk))
-```
-```{r}
-caHuc = st_read("../data/CAhuc/HucCA.shp", "HucCA")
-```
-```{r}
-cc = st_read("../data/huc12/CcHuc.shp", "CcHuc")
-nc = st_read("../data/huc12/NcHuc.shp", "NcHuc")
-sc = st_read("../data/huc12/ScHuc.shp", "ScHuc")
-sn = st_read("../data/huc12/SnHuc.shp", "SnHuc")
-```
-```{r}
-wip = sn = st_read("../data/WIP_Geographies/WIP_Geographies.shp", "WIP_Geographies")
-```
 
-# Select RRKs
+## HUC12
 ```{r}
-rrk_interest = rrk %>% filter(RRK_Region %in% c("Central Coast Region", "North Coast Region", "South Coast Region", "Sierra Nevada Region"))
-```
-```{r}
-ccRrk = rrk %>% filter(RRK_Region == "Central Coast Region")
-ncRrk = rrk %>% filter(RRK_Region == "North Coast Region")
-scRrk = rrk %>% filter(RRK_Region == "South Coast Region")
-snRrk = rrk %>% filter(RRK_Region == "Sierra Nevada Region")
+hucs = st_read("../data/USGS_HUC12/AllHucs.shp", "AllHucs")
 ```
 
 
-# Select
+## States
+```{r}
+states = st_read("../data/State_boundaries/tl_2022_us_state.shp", "tl_2022_us_state")
+```
+
+## WIP
+```{r}
+wip = st_read("../data/WIP_Regions/WIP_Regions.shp", "WIP_Regions")
+```
+# SN
+```{r}
+sn = st_read("../data/sn/SN.shp", "SN")
+```
+# Plots
+```{r}
+plot(st_geometry(hucs))
+```
+
+```{r}
+plot(st_geometry(nv))
+```
+# Select States
+```{r}
+(
+  states_aoi = states %>% filter(NAME %in% c("California", "Oregon", "Nevada", "Arizona"))
+)
+```
+
 # Define projection
 ```{r}
 projection = st_crs(rrk)
 ```
 
-
 # Reproject HUCs
+```{r}
+hucs_ab = st_transform(hucs, projection)
+```
 
 ```{r}
-caHuc_ab = st_transform(caHuc, projection)
+states_ab = st_transform(states_aoi, projection)
 ```
 
 ```{r}
 wip_ab = st_transform(wip, projection)
 ```
 
+# Plot
 ```{r}
-cc_ab = st_transform(cc, projection)
-nc_ab = st_transform(nc, projection)
-sc_ab = st_transform(sc, projection)
-sn_ab = st_transform(sn, projection)
-```
-
-# Sn with wip
-```{r}
-plot(st_geometry(snRrk))
+plot(st_geometry(rrk))
 plot(st_geometry(wip_ab),col="red", add=TRUE)
 ```
-# Join and add attribute
+
+```{r}
+plot(st_geometry(sn))
+plot(st_geometry(wip_ab),col="red", add=TRUE)
+```
+
+# Join Hucs with states
 st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) 4473
 ```{r}
-( joinHucRrk = st_join(caHuc_ab, rrk, largest=TRUE))
+( joinHucstate = st_join(st_make_valid(hucs_ab), st_make_valid(states_ab), largest=TRUE))
 ```
+# Remove HUCs not assigned to California
+```{r}
+(
+  caHucs = joinHucstate %>% filter(NAME=="California")
+)
+```
+
+## Join HUC with RRK
+```{r}
+( joinHucRrk = st_join(caHucs, rrk, largest=TRUE))
+```
+
+## Join WIPS to HUCs
 ```{r}
 ( joinHucRrkWip = st_join(joinHucRrk, wip_ab, largest=TRUE) )
 ```
@@ -86,6 +107,29 @@ st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) 4473
 ( aoi = joinHucRrkWip %>% filter(RRK_Region %in% c("Central Coast Region", "North Coast Region", "South Coast Region", "Sierra Nevada Region"))
 )
 ```
+
+
+
+# Write Shp to file
 ```{r}
-st_write(aoi, "../outputs/HucsRrkWip2.shp", driver="ESRI Shapefile")
+st_write(aoi, "../outputs/HucsRrkWip.shp", driver="ESRI Shapefile")
+```
+
+
+
+
+# Plot SN and WIP
+```{r}
+sn = aoi %>% filter(RRK_Region=="Sierra Nevada Region")
+cc = aoi %>% filter(RRK_Region=="Central Coast Region")
+```
+
+```{r}
+plot(st_geometry(rrk))
+plot(st_geometry(sn),col="red", add=TRUE)
+```
+
+```{r}
+plot(st_geometry(rrk))
+plot(st_geometry(cc),col="red", add=TRUE)
 ```
