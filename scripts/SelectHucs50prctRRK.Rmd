@@ -41,9 +41,6 @@ sn = st_read("../data/sn/SN.shp", "SN")
 plot(st_geometry(hucs))
 ```
 
-```{r}
-plot(st_geometry(nv))
-```
 # Select States
 ```{r}
 (
@@ -67,6 +64,17 @@ states_ab = st_transform(states_aoi, projection)
 
 ```{r}
 wip_ab = st_transform(wip, projection)
+```
+
+# Calculate Huc Area
+```{r}
+( hucs_area = hucs_ab %>% 
+  dplyr::mutate(huc_sqm = as.numeric(st_area(aoi))) %>%
+                # 1 m2 = 0.0.000247105 acres
+  dplyr::mutate(huc_acres = as.numeric(huc_sqm * 0.000247105)) %>%
+                # 1m2 = 0.0001 hectares
+  dplyr::mutate(huc_hectares = as.numeric(huc_sqm * 0.0001))
+)
 ```
 
 # Plot
@@ -108,6 +116,31 @@ st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) 4473
 )
 ```
 
+# Calculate HUC Area
+```{r}
+aoi
+```
+```{r}
+( aoi1 = aoi %>% 
+  dplyr::mutate(huc_sqm = st_area(aoi)) %>%
+                # 1 m2 = 0.0.000247105 acres
+               dplyr::mutate(huc_acres = huc_sqm * 0.000247105) %>%
+                # 1m2 = 0.0001 hectares
+                dplyr::mutate(huc_hectares = huc_sqm * 0.0001)
+)
+```
+Function to clean units from new columns
+function(x) as.numeric(sub("\\s+\\D+$", "", x))
+```{r}
+clean_units <- function(x){as.numeric(sub("\\s+\\D+$", "", x))
+  x
+}
+```
+
+```{r}
+( aoi2 <- clean_units(aoi1) )
+
+```
 
 
 # Write Shp to file
