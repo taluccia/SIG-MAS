@@ -1,0 +1,75 @@
+---
+title: "Orginal Huc 12s from USGS"
+output: html_document
+---
+
+
+
+# Overview
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+```
+
+
+```{r}
+huc15 = st_read("../data/USGS_HUC12/WBD_15/WBDHU12.shp", "WBDHU12")
+```
+```{r}
+huc16 = st_read("../data/USGS_HUC12/WBD_16/WBDHU12.shp", "WBDHU12")
+```
+
+```{r}
+huc17 = st_read("../data/USGS_HUC12/WBD_17/WBDHU12.shp", "WBDHU12")
+```
+
+```{r}
+huc18 = st_read("../data/USGS_HUC12/WBD_18/WBDHU12.shp", "WBDHU12")
+```
+
+## View data
+
+```{r}
+huc15
+```
+
+```{r}
+huc16
+```
+
+```{r}
+huc17
+```
+
+```{r}
+huc18
+```
+
+
+# Bind rows 4222
+```{r}
+(
+  allHucs = bind_rows(huc15, huc16, huc17, huc18) %>% filter(states %in% c("CA", "CA, NV", "CA, OR"))
+)
+```
+
+# Write 
+```{r}
+st_write(allHucs, "../outputs/AllHucs.shp", driver="ESRI Shapefile")
+```
+
+# Plot
+
+```{r}
+plot(st_geometry(allHucs))
+```
+
+
+```{r}
+allHucs %>% st_drop_geometry() %>%
+  group_by_all() %>%
+  filter(n()>1) %>%
+  ungroup()
+```
