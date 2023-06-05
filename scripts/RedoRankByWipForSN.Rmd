@@ -13,6 +13,7 @@ Note: found error in EE code and fixed.
 ```{r}
 library(tidyverse)
 library(skimr)
+library(sf)
 ```
 
 # Data
@@ -24,14 +25,14 @@ hucs = st_read("../data/SelectedHucs/HucsRrkWip.shp", "HucsRrkWip")
 
 ## CSV from EE
 ```{r}
-sn = read.csv("../data/RrkCsv/snHucTreat10WuiBpPrctRk_2023-05-07.csv")
+sn = read.csv("../data/RrkCsv/snHucTreat10WuiBpPrctRk_2023-05-30.csv")
 ```
 
 ## CSV from EE
 ```{r}
-cc = read.csv("../data/RrkCsv/ccHucTreat10WuiBpPrctRk_2023-05-07.csv")
-nc = read.csv("../data/RrkCsv/ncHucTreat10WuiBpPrctRk_2023-05-07.csv")
-sc = read.csv("../data/RrkCsv/scHucTreat10WuiBpPrctRk_2023-05-07.csv")
+cc = read.csv("../data/RrkCsv/ccHucTreat10WuiBpPrctRk_2023-05-30.csv")
+nc = read.csv("../data/RrkCsv/ncHucTreat10WuiBpPrctRk_2023-05-30.csv")
+sc = read.csv("../data/RrkCsv/scHucTreat10WuiBpPrctRk_2023-05-30.csv")
 ```
 
 # Look at data
@@ -44,7 +45,10 @@ glimpse(cc)
 glimpse(nc)
 glimpse(sc)
 ```
+```{r}
+cat(paste0(sprintf('%s', colnames(sn)), collapse = ", "))
 
+```
 
 ```{r}
 skimr::skim(sn)
@@ -65,8 +69,8 @@ scale_rank = function(x) (x+1)
 ```{r}
 (
   sn1 = sn %>% 
-    dplyr::select(Acres, BpMean:RRK_Region, WIPGeoNam:areasqkm, huc12:hutype, name, states:sumsqkm) %>%
-    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, sum, sumsqkm), round, 3)) %>%
+    dplyr::select(BpMean:sumsqkm) %>%
+    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, hucAc, hucHa, hucSqm, sum, sumsqkm), round, 3)) %>%
     mutate(across(c(BpRank, WuiRank), scale_rank)) %>%
     mutate(BpPrct = round(BpRank/n() *100, 2)) %>%
     mutate(WuiPrct = round(WuiRank/n() *100, 2))
@@ -76,8 +80,8 @@ scale_rank = function(x) (x+1)
 ```{r}
 (
   cc1 = cc %>% 
-    dplyr::select(Acres, BpMean:RRK_Region, WIPGeoNam:areasqkm, huc12:hutype, name, states:sumsqkm) %>%
-    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, sum, sumsqkm), round, 3)) %>%
+    dplyr::select(BpMean:sumsqkm) %>%
+    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, hucAc, hucHa, hucSqm, sum, sumsqkm), round, 3)) %>%
     mutate(across(c(BpRank, WuiRank), scale_rank)) %>%
     mutate(BpPrct = round(BpRank/n() *100, 2)) %>%
     mutate(WuiPrct = round(WuiRank/n() *100, 2))
@@ -88,8 +92,8 @@ scale_rank = function(x) (x+1)
 ```{r}
 (
   nc1 = nc %>% 
-    dplyr::select(Acres, BpMean:RRK_Region, WIPGeoNam:areasqkm, huc12:hutype, name, states:sumsqkm) %>%
-    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, sum, sumsqkm), round, 3)) %>%
+    dplyr::select(BpMean:sumsqkm) %>%
+    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, hucAc, hucHa, hucSqm, sum, sumsqkm), round, 3)) %>%
     mutate(across(c(BpRank, WuiRank), scale_rank)) %>%
     mutate(BpPrct = round(BpRank/n() *100, 2)) %>%
     mutate(WuiPrct = round(WuiRank/n() *100, 2))
@@ -99,8 +103,8 @@ scale_rank = function(x) (x+1)
 ```{r}
 (
   sc1 = sc %>% 
-    dplyr::select(Acres, BpMean:RRK_Region, WIPGeoNam:areasqkm, huc12:hutype, name, states:sumsqkm) %>%
-    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, sum, sumsqkm), round, 3)) %>%
+    dplyr::select(BpMean:sumsqkm) %>%
+    mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, hucAc, hucHa, hucSqm, sum, sumsqkm), round, 3)) %>%
     mutate(across(c(BpRank, WuiRank), scale_rank)) %>%
     mutate(BpPrct = round(BpRank/n() *100, 2)) %>%
     mutate(WuiPrct = round(WuiRank/n() *100, 2))
@@ -110,7 +114,7 @@ scale_rank = function(x) (x+1)
 # Rank within WIPs
 ```{r}
 ( 
-  wipRanks = rank1 %>% 
+  wipRanks = sn1 %>% 
     arrange(BpRank) %>%
     group_by(WIPGeoNam) %>%
     mutate(BpRankWip = rank(BpRank)) %>%
@@ -155,7 +159,8 @@ mutate(WipGroupSize = ifelse(WIPGeoNam == "East Side", 181,
 
 ```
 
-# Select Shape file
+# Select Shapefile
+Split shapefile by RRK regions to combine with Rankings in Dataframe.
 ```{r}
 ( sn_rrk = hucs %>% filter (RRK_Region =="Sierra Nevada Region") %>% dplyr::select(huc12))
 ( cc_rrk = hucs %>% filter (RRK_Region =="Central Coast Region") %>% dplyr::select(huc12))
@@ -189,15 +194,21 @@ glimpse(snPrctRank)
 ```{r}
 scPrctRank = scPrctRank %>% mutate(huc12 = as.character(huc12))
 ```
+
+
 # Bind rows into one shapefile
 
 ```{r}
 ( allData = bind_rows(ccPrctRank, ncPrctRank, scPrctRank, snPrctRank) )
 ```
 
+```{r}
+ggplot(allData, aes(group="RRK_Region")) +
+  geom_sf(aes(color = RRK_Region)) 
+```
 
 # Write to shp
-```{r}
+```{r eval=FALSE, include=FALSE}
 st_write(snPrctRank, "../outputs/snPrctRankWIP.shp", driver="ESRI Shapefile")
 ```
 ```{r}
