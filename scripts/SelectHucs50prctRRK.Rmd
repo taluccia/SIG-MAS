@@ -36,10 +36,6 @@ wip = st_read("../data/WIP_Regions/WIP_Regions.shp", "WIP_Regions")
 ```{r}
 sn = st_read("../data/sn/SN.shp", "SN")
 ```
-# Plots
-```{r}
-plot(st_geometry(hucs))
-```
 
 # Select States
 ```{r}
@@ -67,26 +63,19 @@ wip_ab = st_transform(wip, projection)
 ```
 
 # Calculate Huc Area
+as.numeric(round(st_area(fires_ea),1))) %>% 
+
+format(round(1.20, 2), nsmall = 2)
 ```{r}
 ( hucs_area = hucs_ab %>% 
-  dplyr::mutate(huc_sqm = as.numeric(st_area(hucs_ab))) %>%
+  dplyr::mutate(hucSqm = as.numeric(round(st_area(hucs_ab),1))) %>%
                 # 1 m2 = 0.0.000247105 acres
-  dplyr::mutate(huc_acres = as.numeric(huc_sqm * 0.000247105)) %>%
+  dplyr::mutate(hucAc = as.numeric(round(hucSqm * 0.000247105, 1))) %>%
                 # 1m2 = 0.0001 hectares
-  dplyr::mutate(huc_hectares = as.numeric(huc_sqm * 0.0001))
+  dplyr::mutate(hucHa = as.numeric(round(hucSqm * 0.0001, 1)))
 )
 ```
 
-# Plot
-```{r}
-plot(st_geometry(rrk))
-plot(st_geometry(wip_ab),col="red", add=TRUE)
-```
-
-```{r}
-plot(st_geometry(sn))
-plot(st_geometry(wip_ab),col="red", add=TRUE)
-```
 
 # Join Hucs with states
 st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) 4473
@@ -111,20 +100,41 @@ st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) 4473
 ```
 
 
+  dplyr::select(ObjectID, huc12, name, hutype, humod, areaacres, areasqkm, states, hucSqm, hucAc, hucHa, RRK_Region, WIP_Capaci, WIPGeoNam, geometry) %>% 
 ```{r}
-( aoi = joinHucRrkWip %>% filter(RRK_Region %in% c("Central Coast Region", "North Coast Region", "South Coast Region", "Sierra Nevada Region"))
-)
+( aoi1 = joinHucRrkWip %>%
+    filter(RRK_Region %in% c("Central Coast Region", "North Coast Region", "South Coast Region", "Sierra Nevada Region"))
+) 
 ```
 
 
 ```{r}
-aoi
+aoi1
 ```
 
-
+```{r}
+ggplot(aoi1, aes(group="RRK_Region")) +
+  geom_sf(aes(color = RRK_Region)) 
+```
 # Write Shp to file
+```{r eval=FALSE, include=FALSE}
+st_write(aoi1, "../outputs/HucsRrkWip.shp", driver="ESRI Shapefile")
+```
+
+# Plots
 ```{r}
-st_write(aoi, "../outputs/HucsRrkWip.shp", driver="ESRI Shapefile")
+plot(st_geometry(hucs))
+```
+
+# Plot
+```{r}
+plot(st_geometry(rrk))
+plot(st_geometry(wip_ab),col="red", add=TRUE)
+```
+
+```{r}
+plot(st_geometry(sn))
+plot(st_geometry(wip_ab),col="red", add=TRUE)
 ```
 
 
