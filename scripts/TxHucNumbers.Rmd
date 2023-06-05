@@ -1,0 +1,428 @@
+---
+title: "Treatment Math"
+author: "Anna Talucci"
+date: "6/3/2023"
+output: html_document
+---
+
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+```
+
+# Data
+## Tx area
+```{r}
+sn = read.csv("../data/TxArea/snHucTreat10WuiBpPrctRk_2023-06-04.csv")
+nc = read.csv("../data/TxArea/ncHucTreat10WuiBpPrctRk_2023-06-04.csv")
+cc = read.csv("../data/TxArea/ccHucTreat10WuiBpPrctRk_2023-06-04.csv")
+sc = read.csv("../data/TxArea/scHucTreat10WuiBpPrctRk_2023-06-04.csv")
+```
+
+## Hucs
+```{r}
+huc = st_read("../data/TxHucs/allHucsPrctRankWIP.shp", "allHucsPrctRankWIP")
+```
+
+# Bind csv
+```{r}
+( txarea = bind_rows(cc, nc, sc, sn) %>%
+    dplyr::select(huc12, TxArea))
+```
+# Join TxArea to Hucs
+```{r}
+( hucTxArea = merge(x = huc, y = txarea, by = "huc12", all = TRUE) )
+```
+
+# Plot
+```{r}
+ggplot(huc, aes(group="RRK_Region")) +
+  geom_sf(aes(color = RRK_Region)) 
+```
+
+```{r}
+huc
+```
+```{r}
+huc1 = huc %>% st_drop_geometry()
+  huc1[is.na(huc1$RRK_Region),]
+```
+```{r}
+huc %>% group_by(RRK_Region) %>% 
+  summarise(n = n())
+```
+
+
+
+
+# WUI
+
+## Sierra Nevada WUI
+
+```{r}
+hucTxArea %>% 
+    filter(RRK_Region=="Sierra Nevada Region")
+```
+
+```{r}
+( snWui25 = hucTxArea %>% 
+    filter(RRK_Region=="Sierra Nevada Region") %>%
+    filter(WuiPrct <=25) %>%
+    mutate(TxWuiPrctl=25) %>%
+    mutate(TxHucNos=287)
+  )
+```
+(x>=3&x<=7)
+```{r}
+( snWui50 = hucTxArea %>% 
+    filter(RRK_Region=="Sierra Nevada Region") %>%
+    filter(WuiPrct >25& WuiPrct <=50) %>%
+    mutate(TxWuiPrctl=50) %>%
+    mutate(TxHucNos=287)
+  )
+```
+
+```{r}
+( snWui75 = hucTxArea %>% 
+    filter(RRK_Region=="Sierra Nevada Region") %>%
+    filter(WuiPrct >50& WuiPrct <=75) %>%
+    mutate(TxWuiPrctl=75) %>%
+    mutate(TxHucNos=287)
+  )
+```
+
+```{r}
+( snWui100 = hucTxArea %>% 
+    filter(RRK_Region=="Sierra Nevada Region") %>%
+    filter(WuiPrct >75) %>%
+    mutate(TxWuiPrctl=100) %>%
+    mutate(TxHucNos=287)
+   )
+```
+## North Coast WUI
+```{r}
+hucTxArea %>% 
+    filter(RRK_Region=="North Coast Region")
+```
+
+```{r}
+( ncWui25 = hucTxArea %>% 
+    filter(RRK_Region=="North Coast Region") %>%
+    filter(WuiPrct <=25) %>%
+    mutate(TxWuiPrctl=25) %>%
+    mutate(TxHucNos=193)
+  )
+```
+(x>=3&x<=7)
+```{r}
+( ncWui50 = hucTxArea %>% 
+    filter(RRK_Region=="North Coast Region") %>%
+    filter(WuiPrct >25& WuiPrct <=50) %>%
+    mutate(TxWuiPrctl=50) %>%
+    mutate(TxHucNos=194)
+  )
+```
+
+```{r}
+( ncWui75 = hucTxArea %>% 
+    filter(RRK_Region=="North Coast Region") %>%
+    filter(WuiPrct >50& WuiPrct <=75) %>%
+    mutate(TxWuiPrctl=75) %>%
+    mutate(TxHucNos=193)
+  )
+```
+
+```{r}
+( ncWui100 = hucTxArea %>% 
+    filter(RRK_Region=="North Coast Region") %>%
+    filter(WuiPrct >75) %>%
+    mutate(TxWuiPrctl=100) %>%
+    mutate(TxHucNos=194)
+  )
+```
+
+## Central Coast WUI
+```{r}
+hucTxArea %>% 
+    filter(RRK_Region=="Central Coast Region")
+```
+
+```{r}
+( ccWui25 = hucTxArea %>% 
+    filter(RRK_Region=="Central Coast Region") %>%
+    filter(WuiPrct <=25) %>%
+    mutate(TxWuiPrctl=25) %>%
+    mutate(TxHucNos=108)
+  )
+```
+(x>=3&x<=7)
+```{r}
+( ccWui50 = hucTxArea %>% 
+    filter(RRK_Region=="Central Coast Region") %>%
+    filter(WuiPrct >25& WuiPrct <=50) %>%
+    mutate(TxWuiPrctl=50) %>%
+    mutate(TxHucNos=109)
+  )
+```
+
+```{r}
+( ccWui75 = hucTxArea %>% 
+    filter(RRK_Region=="Central Coast Region") %>%
+    filter(WuiPrct >50& WuiPrct <=75) %>%
+    mutate(TxWuiPrctl=75) %>%
+    mutate(TxHucNos=109)
+  )
+```
+
+```{r}
+( ccWui100 = hucTxArea %>% 
+    filter(RRK_Region=="Central Coast Region") %>%
+    filter(WuiPrct >75) %>%
+    mutate(TxWuiPrctl=100) %>%
+    mutate(TxHucNos=109)
+  )
+```
+
+## South Coast WUI
+```{r}
+hucTxArea %>% 
+    filter(RRK_Region=="South Coast Region")
+```
+
+```{r}
+( scWui25 = hucTxArea %>% 
+    filter(RRK_Region=="South Coast Region") %>%
+    filter(WuiPrct <=25)%>%
+    mutate(TxWuiPrctl=25) %>%
+    mutate(TxHucNos=120)
+  )
+```
+(x>=3&x<=7)
+```{r}
+( scWui50 = hucTxArea %>% 
+    filter(RRK_Region=="South Coast Region") %>%
+    filter(WuiPrct >25& WuiPrct <=50) %>%
+    mutate(TxWuiPrctl=50) %>%
+    mutate(TxHucNos=120)
+  )
+```
+
+```{r}
+( scWui75 = hucTxArea %>% 
+    filter(RRK_Region=="South Coast Region") %>%
+    filter(WuiPrct >50& WuiPrct <=75) %>%
+    mutate(TxWuiPrctl=75) %>%
+    mutate(TxHucNos=120)
+  )
+```
+
+```{r}
+( scWui100 = hucTxArea %>% 
+    filter(RRK_Region=="South Coast Region") %>%
+    filter(WuiPrct >75) %>%
+    mutate(TxWuiPrctl=100) %>%
+    mutate(TxHucNos=120)
+  )
+```
+## Recombine HUCs with added attributes
+
+### Within RRK
+```{r}
+( snWuiTx = bind_rows(snWui25, snWui50, snWui75, snWui100) )
+```
+
+```{r}
+( ncWuiTx = bind_rows(ncWui25, ncWui50, ncWui75, ncWui100) )
+```
+
+```{r}
+( ccWuiTx = bind_rows(ccWui25, ccWui50, ccWui75, ccWui100) )
+```
+
+```{r}
+( scWuiTx = bind_rows(scWui25, scWui50, scWui75, scWui100) )
+```
+
+### All RRKs
+```{r}
+( allWuiTx = bind_rows(snWuiTx, ncWuiTx, ccWuiTx, scWuiTx) )
+```
+
+# BP
+## Sierra Nevada BP
+
+
+```{r}
+( snBp25 = snWuiTx %>% 
+    filter(BpPrct <=25) %>%
+    mutate(TxBpPrctl=25) 
+  )
+```
+(x>=3&x<=7)
+```{r}
+( snBp50 = snWuiTx %>% 
+    filter(BpPrct >25& BpPrct <=50) %>%
+    mutate(TxBpPrctl=50) 
+  )
+```
+
+```{r}
+( snBp75 = snWuiTx %>% 
+    filter(BpPrct >50& BpPrct <=75)  %>%
+    mutate(TxBpPrctl=75) 
+  ) 
+
+    
+```
+
+```{r}
+( snBp100 = snWuiTx %>% 
+    filter(BpPrct >75)   %>%
+    mutate(TxBpPrctl=100) 
+  ) 
+    
+```
+
+## North Coast BP
+
+
+```{r}
+( ncBp25 = ncWuiTx %>% 
+    filter(BpPrct <=25)  %>%
+    mutate(TxBpPrctl=25) 
+  ) 
+    
+```
+(x>=3&x<=7)
+```{r}
+( ncBp50 = ncWuiTx %>% 
+    filter(BpPrct >25& BpPrct <=50) %>%
+    mutate(TxBpPrctl=50) 
+  ) 
+    
+```
+
+```{r}
+( ncBp75 = ncWuiTx %>% 
+    filter(BpPrct >50& BpPrct <=75) %>%
+    mutate(TxBpPrctl=75) 
+  ) 
+    
+```
+
+```{r}
+( ncBp100 = ncWuiTx %>% 
+    filter(BpPrct >75)  %>%
+    mutate(TxBpPrctl=100) 
+  ) 
+    
+```
+
+## Central Coast BP
+```{r}
+hucTxArea %>% 
+    filter(RRK_Region=="Central Coast Region")
+```
+
+```{r}
+( ccBp25 = ccWuiTx %>% 
+    filter(BpPrct <=25) %>%
+    mutate(TxBpPrctl=25) 
+  ) 
+```
+(x>=3&x<=7)
+```{r}
+( ccBp50 = ccWuiTx %>% 
+    filter(BpPrct >25& BpPrct <=50) %>%
+    mutate(TxBpPrctl=50) 
+  ) 
+```
+
+```{r}
+( ccBp75 = ccWuiTx %>% 
+    filter(BpPrct >50& BpPrct <=75)  %>%
+    mutate(TxBpPrctl=75) 
+  ) 
+    
+```
+
+```{r}
+( ccBp100 = ccWuiTx %>% 
+    filter(BpPrct >75)  %>%
+    mutate(TxBpPrctl=100) 
+  ) 
+```
+
+## South Coast BP
+```{r}
+hucTxArea %>% 
+    filter(RRK_Region=="South Coast Region")
+```
+
+```{r}
+( scBp25 = scWuiTx %>% 
+        filter(BpPrct <=25) %>%
+    mutate(TxBpPrctl=25) 
+  ) 
+
+```
+(x>=3&x<=7)
+```{r}
+( scBp50 = scWuiTx %>% 
+       filter(BpPrct >25& BpPrct <=50) %>%
+    mutate(TxBpPrctl=50) 
+  ) 
+```
+
+```{r}
+( scBp75 = scWuiTx %>% 
+       filter(BpPrct >50& BpPrct <=75) %>%
+    mutate(TxBpPrctl=75) 
+  ) 
+```
+
+```{r}
+( scBp100 = scWuiTx %>% 
+       filter(BpPrct >75)  %>%
+    mutate(TxBpPrctl=75) 
+  ) 
+```
+# Recombine HUCs with added attributes
+
+## Within RRK
+```{r}
+( snBpTx = bind_rows(snBp25, snBp50, snBp75, snBp100) )
+```
+
+```{r}
+( ncBpTx = bind_rows(ncBp25, ncBp50, ncBp75, ncBp100) )
+```
+
+```{r}
+( ccBpTx = bind_rows(ccBp25, ccBp50, ccBp75, ccBp100) )
+```
+
+```{r}
+( scBpTx = bind_rows(scBp25, scBp50, scBp75, scBp100) )
+```
+
+## All RRKs
+```{r}
+( allDataTx = bind_rows(snBpTx, ncBpTx, ccBpTx, scBpTx) )
+```
+
+```{r}
+(
+  allDataTx1 = allDataTx %>% 
+    mutate(TxSizeSqm = 404686) %>%
+    mutate(TxSizeAc = 100) %>%
+    mutate(TxRadiiM = (sqrt(TxSizeSqm))/2) %>%
+    dplyr::select(huc12:TxBpPrctl,TxArea, TxSizeSqm, TxSizeAc,TxRadiiM,  geometry)
+)
+```
+# Write to shapefile
+```{r}
+st_write(allDataTx1, "../outputs/TxPrctRankRrkWip.shp", driver="ESRI Shapefile")
+```
