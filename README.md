@@ -49,10 +49,10 @@ This was looking at the RRK Boundaries for a structure issue that is occurring E
 
 # Step by step Processes
 
-1. Run SelectHucs50prctRRK.Rmd -> upload HucsRrkWip.shp output to EE assets
-2. Run EE TreatableAreaBpWuiPercentRank -> output is HUCs by RRK
-3. snHucTreat10WuiBpPrctRk_2023-05-29.csv -> read into RedoRankByWipForSN.Rmd -> output allHucsPrctRankWIP.shp to EE assets
-4. 
+1. Run `SelectHucs50prctRRK.Rmd` -> output HucsRrkWip.shp -> upload to EE assets
+2. Run EE TreatableAreaBpWuiPercentRank -> output is HUCs by RRK (e.g., snHucTreat10WuiBpPrctRk_2023-05-29.csv) -> read into `RedoRankByRrkWip.Rmd` 
+3.  `RedoRankByRrkWip.Rmd` -> output allHucsPrctRankWIP.shp -> upload to EE assets
+4. Run 
 
 
 # EE Scripts
