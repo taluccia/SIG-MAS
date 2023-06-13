@@ -45,10 +45,23 @@ ggplot(huc, aes(group="RRK_Region")) +
 ```{r}
 huc
 ```
+2878 Hucs across 4 RRK regions
 ```{r}
-huc1 = huc %>% st_drop_geometry()
-  huc1[is.na(huc1$RRK_Region),]
+huc1 = huc[is.na(huc$RRK_Region),]
 ```
+```{r}
+huc1
+```
+41 HUCs with NAs
+```{r eval=FALSE, include=FALSE}
+st_write(huc1, "../outputs/HUCsWithNa41.shp", driver="ESRI Shapefile")
+```
+```{r}
+huc2 = huc %>% st_drop_geometry()
+  huc2[is.na(huc2$RRK_Region),]
+```
+
+# Total Hucs per RRK
 ```{r}
 huc %>% group_by(RRK_Region) %>% 
   summarise(n = n())
@@ -57,9 +70,10 @@ huc %>% group_by(RRK_Region) %>%
 
 
 
-# WUI
+# Add Percentile group
+## WUI
 
-## Sierra Nevada WUI
+### Sierra Nevada WUI
 
 ```{r}
 hucTxArea %>% 
@@ -101,7 +115,8 @@ hucTxArea %>%
     mutate(TxHucNos=287)
    )
 ```
-## North Coast WUI
+
+### North Coast WUI
 ```{r}
 hucTxArea %>% 
     filter(RRK_Region=="North Coast Region")
@@ -424,5 +439,5 @@ hucTxArea %>%
 ```
 # Write to shapefile
 ```{r}
-st_write(allDataTx1, "../outputs/TxPrctRankRrkWip.shp", driver="ESRI Shapefile")
+st_write(allDataTx1, "../outputs/hucsShp/TxPrctRankRrkWip.shp", driver="ESRI Shapefile")
 ```

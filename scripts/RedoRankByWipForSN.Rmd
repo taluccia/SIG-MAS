@@ -165,7 +165,7 @@ Split shapefile by RRK regions to combine with Rankings in Dataframe.
 ( sn_rrk = hucs %>% filter (RRK_Region =="Sierra Nevada Region") %>% dplyr::select(huc12))
 ( cc_rrk = hucs %>% filter (RRK_Region =="Central Coast Region") %>% dplyr::select(huc12))
 ( nc_rrk = hucs %>% filter (RRK_Region =="North Coast Region") %>% dplyr::select(huc12))
-( sc_rrk = hucs %>% filter (RRK_Region =="Sout Coast Region") %>% dplyr::select(huc12))
+( sc_rrk = hucs %>% filter (RRK_Region =="South Coast Region") %>% dplyr::select(huc12))
 ```
 
 # join
@@ -192,7 +192,7 @@ glimpse(scPrctRank)
 glimpse(snPrctRank)
 ```
 ```{r}
-scPrctRank = scPrctRank %>% mutate(huc12 = as.character(huc12))
+( scPrctRank = scPrctRank %>% mutate(huc12 = as.character(huc12)) )
 ```
 
 
@@ -208,9 +208,11 @@ ggplot(allData, aes(group="RRK_Region")) +
 ```
 
 # Write to shp
+```{r}
+st_write(allData, "../outputs/hucsShp/allHucsPrctRankWIP.shp", driver="ESRI Shapefile")
+```
+
+# Write to shp only SN
 ```{r eval=FALSE, include=FALSE}
 st_write(snPrctRank, "../outputs/snPrctRankWIP.shp", driver="ESRI Shapefile")
-```
-```{r}
-st_write(allData, "../outputs/allHucsPrctRankWIP.shp", driver="ESRI Shapefile")
 ```
