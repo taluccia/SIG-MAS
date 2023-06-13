@@ -37,3 +37,15 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+
+# For Mac users computer specific files
+**/.DS_Store
+
+
+# exclude specific folders from push to github
+figures/*
+images/*
+files/*
+data/*
+outputs/*
