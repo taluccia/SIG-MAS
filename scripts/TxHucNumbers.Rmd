@@ -96,16 +96,9 @@ huc %>% group_by(RRK_Region) %>%
 # Add Percentile group
 ## WUI
 
-### Sierra Nevada WUI
 
 ```{r}
-hucTxArea1 %>% 
-    filter(RRK_Region=="Sierra Nevada Region")
-```
-
-```{r}
-( snWui25 = hucTxArea1 %>% 
-    filter(RRK_Region=="Sierra Nevada Region") %>%
+( Wui25 = hucTxArea1 %>% 
     filter(WuiPrct <=25) %>%
     mutate(TxWuiPrctl=25) %>%
     mutate(TxHucNos=287)
@@ -113,8 +106,7 @@ hucTxArea1 %>%
 ```
 (x>=3&x<=7)
 ```{r}
-( snWui50 = hucTxArea1 %>% 
-    filter(RRK_Region=="Sierra Nevada Region") %>%
+( Wui50 = hucTxArea1 %>% 
     filter(WuiPrct >25& WuiPrct <=50) %>%
     mutate(TxWuiPrctl=50) %>%
     mutate(TxHucNos=287)
@@ -122,8 +114,7 @@ hucTxArea1 %>%
 ```
 
 ```{r}
-( snWui75 = hucTxArea1 %>% 
-    filter(RRK_Region=="Sierra Nevada Region") %>%
+( Wui75 = hucTxArea1 %>% 
     filter(WuiPrct >50& WuiPrct <=75) %>%
     mutate(TxWuiPrctl=75) %>%
     mutate(TxHucNos=287)
@@ -131,183 +122,37 @@ hucTxArea1 %>%
 ```
 
 ```{r}
-( snWui100 = hucTxArea1 %>% 
-    filter(RRK_Region=="Sierra Nevada Region") %>%
+( Wui100 = hucTxArea1 %>% 
     filter(WuiPrct >75) %>%
     mutate(TxWuiPrctl=100) %>%
     mutate(TxHucNos=287)
    )
 ```
 
-### North Coast WUI
+### Recombine
 ```{r}
-hucTxArea1 %>% 
-    filter(RRK_Region=="North Coast Region")
+(WuiTx = bind_rows(Wui25, Wui50, Wui75, Wui100) )
 ```
 
-```{r}
-( ncWui25 = hucTxArea1 %>% 
-    filter(RRK_Region=="North Coast Region") %>%
-    filter(WuiPrct <=25) %>%
-    mutate(TxWuiPrctl=25) %>%
-    mutate(TxHucNos=193)
-  )
-```
-(x>=3&x<=7)
-```{r}
-( ncWui50 = hucTxArea1 %>% 
-    filter(RRK_Region=="North Coast Region") %>%
-    filter(WuiPrct >25& WuiPrct <=50) %>%
-    mutate(TxWuiPrctl=50) %>%
-    mutate(TxHucNos=194)
-  )
-```
+
+## BP Percentile Groups
 
 ```{r}
-( ncWui75 = hucTxArea1 %>% 
-    filter(RRK_Region=="North Coast Region") %>%
-    filter(WuiPrct >50& WuiPrct <=75) %>%
-    mutate(TxWuiPrctl=75) %>%
-    mutate(TxHucNos=193)
-  )
-```
-
-```{r}
-( ncWui100 = hucTxArea1 %>% 
-    filter(RRK_Region=="North Coast Region") %>%
-    filter(WuiPrct >75) %>%
-    mutate(TxWuiPrctl=100) %>%
-    mutate(TxHucNos=194)
-  )
-```
-
-## Central Coast WUI
-```{r}
-hucTxArea1 %>% 
-    filter(RRK_Region=="Central Coast Region")
-```
-
-```{r}
-( ccWui25 = hucTxArea1 %>% 
-    filter(RRK_Region=="Central Coast Region") %>%
-    filter(WuiPrct <=25) %>%
-    mutate(TxWuiPrctl=25) %>%
-    mutate(TxHucNos=108)
-  )
-```
-(x>=3&x<=7)
-```{r}
-( ccWui50 = hucTxArea1 %>% 
-    filter(RRK_Region=="Central Coast Region") %>%
-    filter(WuiPrct >25& WuiPrct <=50) %>%
-    mutate(TxWuiPrctl=50) %>%
-    mutate(TxHucNos=109)
-  )
-```
-
-```{r}
-( ccWui75 = hucTxArea1 %>% 
-    filter(RRK_Region=="Central Coast Region") %>%
-    filter(WuiPrct >50& WuiPrct <=75) %>%
-    mutate(TxWuiPrctl=75) %>%
-    mutate(TxHucNos=109)
-  )
-```
-
-```{r}
-( ccWui100 = hucTxArea1 %>% 
-    filter(RRK_Region=="Central Coast Region") %>%
-    filter(WuiPrct >75) %>%
-    mutate(TxWuiPrctl=100) %>%
-    mutate(TxHucNos=109)
-  )
-```
-
-## South Coast WUI
-```{r}
-hucTxArea1 %>% 
-    filter(RRK_Region=="South Coast Region")
-```
-
-```{r}
-( scWui25 = hucTxArea1 %>% 
-    filter(RRK_Region=="South Coast Region") %>%
-    filter(WuiPrct <=25)%>%
-    mutate(TxWuiPrctl=25) %>%
-    mutate(TxHucNos=120)
-  )
-```
-(x>=3&x<=7)
-```{r}
-( scWui50 = hucTxArea1 %>% 
-    filter(RRK_Region=="South Coast Region") %>%
-    filter(WuiPrct >25& WuiPrct <=50) %>%
-    mutate(TxWuiPrctl=50) %>%
-    mutate(TxHucNos=120)
-  )
-```
-
-```{r}
-( scWui75 = hucTxArea1 %>% 
-    filter(RRK_Region=="South Coast Region") %>%
-    filter(WuiPrct >50& WuiPrct <=75) %>%
-    mutate(TxWuiPrctl=75) %>%
-    mutate(TxHucNos=120)
-  )
-```
-
-```{r}
-( scWui100 = hucTxArea1 %>% 
-    filter(RRK_Region=="South Coast Region") %>%
-    filter(WuiPrct >75) %>%
-    mutate(TxWuiPrctl=100) %>%
-    mutate(TxHucNos=120)
-  )
-```
-## Recombine HUCs with added attributes
-
-### Within RRK
-```{r}
-( snWuiTx = bind_rows(snWui25, snWui50, snWui75, snWui100) )
-```
-
-```{r}
-( ncWuiTx = bind_rows(ncWui25, ncWui50, ncWui75, ncWui100) )
-```
-
-```{r}
-( ccWuiTx = bind_rows(ccWui25, ccWui50, ccWui75, ccWui100) )
-```
-
-```{r}
-( scWuiTx = bind_rows(scWui25, scWui50, scWui75, scWui100) )
-```
-
-### All RRKs
-```{r}
-( allWuiTx = bind_rows(snWuiTx, ncWuiTx, ccWuiTx, scWuiTx) )
-```
-
-# BP
-## Sierra Nevada BP
-
-
-```{r}
-( snBp25 = snWuiTx %>% 
+( Bp25 = WuiTx %>% 
     filter(BpPrct <=25) %>%
     mutate(TxBpPrctl=25) 
   )
 ```
 (x>=3&x<=7)
 ```{r}
-( snBp50 = snWuiTx %>% 
+( Bp50 = WuiTx %>% 
     filter(BpPrct >25& BpPrct <=50) %>%
     mutate(TxBpPrctl=50) 
   )
 ```
 
 ```{r}
-( snBp75 = snWuiTx %>% 
+( Bp75 = WuiTx %>% 
     filter(BpPrct >50& BpPrct <=75)  %>%
     mutate(TxBpPrctl=75) 
   ) 
@@ -316,159 +161,39 @@ hucTxArea1 %>%
 ```
 
 ```{r}
-( snBp100 = snWuiTx %>% 
+( Bp100 = WuiTx %>% 
     filter(BpPrct >75)   %>%
     mutate(TxBpPrctl=100) 
   ) 
     
 ```
 
-## North Coast BP
-
-
-```{r}
-( ncBp25 = ncWuiTx %>% 
-    filter(BpPrct <=25)  %>%
-    mutate(TxBpPrctl=25) 
-  ) 
-    
-```
-(x>=3&x<=7)
-```{r}
-( ncBp50 = ncWuiTx %>% 
-    filter(BpPrct >25& BpPrct <=50) %>%
-    mutate(TxBpPrctl=50) 
-  ) 
-    
-```
+### Recombine HUCs with added attributes
 
 ```{r}
-( ncBp75 = ncWuiTx %>% 
-    filter(BpPrct >50& BpPrct <=75) %>%
-    mutate(TxBpPrctl=75) 
-  ) 
-    
+( BpTx = bind_rows(Bp25, Bp50, Bp75, Bp100) )
 ```
 
-```{r}
-( ncBp100 = ncWuiTx %>% 
-    filter(BpPrct >75)  %>%
-    mutate(TxBpPrctl=100) 
-  ) 
-    
-```
 
-## Central Coast BP
-```{r}
-hucTxArea1 %>% 
-    filter(RRK_Region=="Central Coast Region")
-```
-
-```{r}
-( ccBp25 = ccWuiTx %>% 
-    filter(BpPrct <=25) %>%
-    mutate(TxBpPrctl=25) 
-  ) 
-```
-(x>=3&x<=7)
-```{r}
-( ccBp50 = ccWuiTx %>% 
-    filter(BpPrct >25& BpPrct <=50) %>%
-    mutate(TxBpPrctl=50) 
-  ) 
-```
-
-```{r}
-( ccBp75 = ccWuiTx %>% 
-    filter(BpPrct >50& BpPrct <=75)  %>%
-    mutate(TxBpPrctl=75) 
-  ) 
-    
-```
-
-```{r}
-( ccBp100 = ccWuiTx %>% 
-    filter(BpPrct >75)  %>%
-    mutate(TxBpPrctl=100) 
-  ) 
-```
-
-## South Coast BP
-```{r}
-hucTxArea1 %>% 
-    filter(RRK_Region=="South Coast Region")
-```
-
-```{r}
-( scBp25 = scWuiTx %>% 
-        filter(BpPrct <=25) %>%
-    mutate(TxBpPrctl=25) 
-  ) 
-
-```
-(x>=3&x<=7)
-```{r}
-( scBp50 = scWuiTx %>% 
-       filter(BpPrct >25& BpPrct <=50) %>%
-    mutate(TxBpPrctl=50) 
-  ) 
-```
-
-```{r}
-( scBp75 = scWuiTx %>% 
-       filter(BpPrct >50& BpPrct <=75) %>%
-    mutate(TxBpPrctl=75) 
-  ) 
-```
-
-```{r}
-( scBp100 = scWuiTx %>% 
-       filter(BpPrct >75)  %>%
-    mutate(TxBpPrctl=75) 
-  ) 
-```
-# Recombine HUCs with added attributes
-
-## Within RRK
-```{r}
-( snBpTx = bind_rows(snBp25, snBp50, snBp75, snBp100) )
-```
-
-```{r}
-( ncBpTx = bind_rows(ncBp25, ncBp50, ncBp75, ncBp100) )
-```
-
-```{r}
-( ccBpTx = bind_rows(ccBp25, ccBp50, ccBp75, ccBp100) )
-```
-
-```{r}
-( scBpTx = bind_rows(scBp25, scBp50, scBp75, scBp100) )
-```
-
-## All RRKs
-```{r}
-( allDataTx = bind_rows(snBpTx, ncBpTx, ccBpTx, scBpTx) )
-```
-
+# Add Tx size
 ```{r}
 (
-  allDataTx1 = allDataTx %>% 
+  allDataTx = BpTx %>% 
     mutate(TxSizeSqm = 404686) %>%
     mutate(TxSizeAc = 100) %>%
     mutate(TxRadiiM = (sqrt(TxSizeSqm))/2) %>%
-    dplyr::select(huc12:TxBpPrctl,TxArea, TxSizeSqm, TxSizeAc,TxRadiiM,  geometry)
+    dplyr::select(huc12:TxBpPrctl, TxSizeSqm, TxSizeAc,TxRadiiM,  geometry)
 )
 ```
 # Add RFFC
 ```{r}
-allDataTx1 %>% group_by(RRK_Region, Priority) %>%
+allDataTx %>% group_by(RRK_Region, Priority) %>%
   summarize(n=n())
 ```
 x > 2 & x < 5,
 ```{r}
 ( 
-  txRffc = allDataTx1 %>%
+  txRffc = allDataTx %>%
   dplyr::mutate(rffc = round(BpPrct*WuiPrct, 2)) %>%
     dplyr::mutate(totCt = as.numeric(ifelse(RRK_Region =="Central Coast Region", 435,
                           ifelse(RRK_Region =="North Coast Region", 774,
@@ -480,7 +205,7 @@ x > 2 & x < 5,
 )
 
 ```
-
+## Check ranking fro RFFC
 ```{r}
 txRffc %>%  filter(RRK_Region=="Central Coast Region") %>%
   dplyr::select(RRK_Region,Priority, rffc, rffcRank, rffcPrct) %>%
@@ -488,15 +213,15 @@ txRffc %>%  filter(RRK_Region=="Central Coast Region") %>%
   arrange(rffcPrct)
 ```
 
-
 ```{r}
-glimpse(txRffc)
+txRffc %>%  filter(RRK_Region=="South Coast Region") %>%
+  dplyr::select(RRK_Region,Priority, rffc, rffcRank, rffcPrct) %>%
+
+  arrange(rffcPrct)
 ```
 
-```{r}
-txRffc %>% filter(RRK_Region=="South Coast Region") %>%
-  filter(rffcPrct<=25)
-```
+
+
 ```{r}
 min(txRffc$Rffc)
 max(txRffc$Rffc)
@@ -507,9 +232,6 @@ txRffc %>% group_by(RRK_Region) %>% summarize(across(c(BpRank, BpPrct, WuiRank, 
 ```
 
 # Add Percentile RFFC
-
-
-
 ```{r}
 ( Rffc25 = txRffc %>% 
     filter(rffcPrct <=25) %>%
@@ -529,8 +251,6 @@ txRffc %>% group_by(RRK_Region) %>% summarize(across(c(BpRank, BpPrct, WuiRank, 
     filter(rffcPrct >50& rffcPrct <=75)  %>%
     mutate(TxRffcPrctl=75) 
   ) 
-
-    
 ```
 
 ```{r}
@@ -538,7 +258,6 @@ txRffc %>% group_by(RRK_Region) %>% summarize(across(c(BpRank, BpPrct, WuiRank, 
     filter(rffcPrct >75)   %>%
     mutate(TxRffcPrctl=100) 
   ) 
-    
 ```
 
 ## Recombine Rows
@@ -552,134 +271,12 @@ RffcTx %>%  filter(RRK_Region=="Central Coast Region") %>%
   arrange(rffcPrct)
 ```
 
-## North Coast Rffc
-
-
 ```{r}
-( ncRffc25 = nctxRffc %>% 
-    filter(rffcPrct <=25)  %>%
-    mutate(TxRffcPrctl=25) 
-  ) 
-    
+( RffcTx1 = RffcTx %>% dplyr::select(huc12:WuiRank, hucAc:states, WIP_Capaci:TxRadiiM, rffc:TxRffcPrctl, geometry) 
+)
 ```
-(x>=3&x<=7)
-```{r}
-( ncRffc50 = nctxRffc %>% 
-    filter(rffcPrct >25& rffcPrct <=50) %>%
-    mutate(TxRffcPrctl=50) 
-  ) 
-    
-```
-
-```{r}
-( ncRffc75 = nctxRffc %>% 
-    filter(rffcPrct >50& rffcPrct <=75) %>%
-    mutate(TxRffcPrctl=75) 
-  ) 
-    
-```
-
-```{r}
-( ncRffc100 = nctxRffc %>% 
-    filter(rffcPrct >75)  %>%
-    mutate(TxRffcPrctl=100) 
-  ) 
-    
-```
-
-## Central Coast Rffc
-
-
-```{r}
-( ccRffc25 = cctxRffc %>% 
-    filter(rffcPrct <=25) %>%
-    mutate(TxRffcPrctl=25) 
-  ) 
-```
-(x>=3&x<=7)
-```{r}
-( ccRffc50 = cctxRffc %>% 
-    filter(rffcPrct >25& rffcPrct <=50) %>%
-    mutate(TxRffcPrctl=50) 
-  ) 
-```
-
-```{r}
-( ccRffc75 = cctxRffc %>% 
-    filter(rffcPrct >50& rffcPrct <=75)  %>%
-    mutate(TxRffcPrctl=75) 
-  ) 
-    
-```
-
-```{r}
-( ccRffc100 = cctxRffc %>% 
-    filter(rffcPrct >75)  %>%
-    mutate(TxRffcPrctl=100) 
-  ) 
-```
-
-## South Coast Rffc
-
-
-```{r}
-( scRffc25 = sctxRffc %>% 
-        filter(rffcPrct <=25) %>%
-    mutate(TxRffcPrctl=25) 
-  ) 
-
-```
-(x>=3&x<=7)
-```{r}
-( scRffc50 = sctxRffc %>% 
-       filter(rffcPrct >25& rffcPrct <=50) %>%
-    mutate(TxRffcPrctl=50) 
-  ) 
-```
-
-```{r}
-( scRffc75 = sctxRffc %>% 
-       filter(rffcPrct >50& rffcPrct <=75) %>%
-    mutate(TxRffcPrctl=75) 
-  ) 
-```
-
-```{r}
-( scRffc100 = sctxRffc %>% 
-       filter(rffcPrct >75)  %>%
-    mutate(TxRffcPrctl=75) 
-  ) 
-```
-## Recombine HUCs with added attributes
-
-### Within RRK
-```{r}
-( snRffcTx = bind_rows(snRffc25, snRffc50, snRffc75, snRffc100) )
-```
-
-```{r}
-( ncRffcTx = bind_rows(ncRffc25, ncRffc50, ncRffc75, ncRffc100) )
-```
-
-```{r}
-( ccRffcTx = bind_rows(ccRffc25, ccRffc50, ccRffc75, ccRffc100) )
-```
-
-```{r}
-( scRffcTx = bind_rows(scRffc25, scRffc50, scRffc75, scRffc100) )
-```
-
-### Recombine RRKs
-```{r}
-( CombineDataTx = bind_rows(snRffcTx, ncRffcTx, ccRffcTx, scRffcTx) )
-```
-
 # Map
-```{r}
-ggplot(txRffc, aes(group="RRK_Region")) +
-  geom_sf(aes(color = rffcPrct))  +
-  geom_sf(aes(color = Priorty))
-```
+
 ```{r}
 my_breaks <- c(25, 50, 75, 100)
 ggplot(txRffc) +
@@ -701,5 +298,5 @@ st_write(allDataTx1, "../outputs/hucsShp/TxPrctRankRrkWip.shp", driver="ESRI Sha
 
 # Write to shapefile
 ```{r eval=FALSE, include=FALSE}
-st_write(txRffc , "../outputs/hucsShp/TxPrctRankRrkWipRffc.shp", driver="ESRI Shapefile")
+st_write(RffcTx1, "../outputs/hucsShp/TxPrctRankRrkWipRffc.shp", driver="ESRI Shapefile")
 ```
