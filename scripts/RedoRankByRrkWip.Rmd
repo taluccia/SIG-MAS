@@ -24,17 +24,13 @@ hucs = st_read("../data/SelectedHucs/HucsRrkWip.shp", "HucsRrkWip")
 ```
 
 ## CSV from EE
-```{r}
-sn = read.csv("../data/RrkCsv/snHucTreat10WuiBpPrctRk_2023-05-30.csv")
-```
 
-## CSV from EE
 ```{r}
-cc = read.csv("../data/RrkCsv/ccHucTreat10WuiBpPrctRk_2023-05-30.csv")
-nc = read.csv("../data/RrkCsv/ncHucTreat10WuiBpPrctRk_2023-05-30.csv")
-sc = read.csv("../data/RrkCsv/scHucTreat10WuiBpPrctRk_2023-05-30.csv")
+sn = read.csv("../data/TxArea/snHucTreat10WuiBpPrctRk_2023-06-04.csv")
+nc = read.csv("../data/TxArea/ncHucTreat10WuiBpPrctRk_2023-06-04.csv")
+cc = read.csv("../data/TxArea/ccHucTreat10WuiBpPrctRk_2023-06-04.csv")
+sc = read.csv("../data/TxArea/scHucTreat10WuiBpPrctRk_2023-06-04.csv")
 ```
-
 # Look at data
 ```{r}
 glimpse(sn)
