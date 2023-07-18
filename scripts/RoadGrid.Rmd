@@ -1,0 +1,73 @@
+---
+title: "Road Grid"
+author: "Anna Talucci"
+date: "7/16/2023"
+output: html_document
+---
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+library(terra)
+```
+
+# Data
+
+## RRK
+```{r}
+rrk = st_read("../data/RRK/RRK_boundaries3.shp", "RRK_boundaries3")
+```
+```{r}
+rrk
+```
+## Raod
+```{r}
+roads = st_read("../data/tl_2019_us_primaryroads/tl_2019_us_primaryroads.shp", "tl_2019_us_primaryroads")
+```
+
+```{r}
+roads
+```
+
+# Filter RRK
+```{r}
+sc = rrk %>% filter(RRK_Region=="South Coast Region")
+```
+
+# Reproject 
+```{r}
+roads = st_transform(roads, crs = "EPSG:3310")
+sc = st_transform(sc, crs = "EPSG:3310")
+```
+
+## Check projections match
+```{r}
+st_crs(sc) == st_crs(roads)
+```
+
+# Create and select Grid for roads
+```{r}
+scGridRd <- st_make_grid(sc, square = T, cellsize = c(636.1494, 636.1494)) %>%
+  st_sf() %>% 
+  st_cast('POLYGON') %>%
+  st_join(., roads) %>% 
+  drop_na(LINEARID)
+
+```
+## check data
+```{r}
+class(scGridRd)
+scGridRd
+```
+## Plot
+```{r}
+ggplot() + geom_sf(data = scGridRd) + 
+  theme_bw()
+```
+
+# Write
+
+```{r eval=FALSE, include=FALSE}
+st_write(scGridRd, "../outputs/GridRoad/scGridRd.shp", driver="ESRI Shapefile")
+```
