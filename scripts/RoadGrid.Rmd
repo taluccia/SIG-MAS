@@ -13,7 +13,10 @@ library(terra)
 ```
 
 # Data
-
+## hucs
+```{r}
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
 ## RRK
 ```{r}
 rrk = st_read("../data/RRK/RRK_boundaries3.shp", "RRK_boundaries3")
@@ -23,36 +26,74 @@ rrk
 ```
 ## Raod
 ```{r}
-roads = st_read("../data/tl_2019_us_primaryroads/tl_2019_us_primaryroads.shp", "tl_2019_us_primaryroads")
+roads = st_read("../data/roads/tl_2019_us_primaryroads/tl_2019_us_primaryroads.shp", "tl_2019_us_primaryroads")
 ```
 
 ```{r}
-roads
+roadps = st_read("../data/roads/tl_2016_06_prisecroads/tl_2016_06_prisecroads.shp", "tl_2016_06_prisecroads")
+```
+```{r}
+roadps
 ```
 
+```{r}
+roadsc = st_read("../data/roads/ee/scRoad.shp", "scRoad")
+```
+```{r}
+roadcc = st_read("../data/roads/ee/ccRoad.shp", "ccRoad")
+```
 # Filter RRK
 ```{r}
 sc = rrk %>% filter(RRK_Region=="South Coast Region")
+cc = rrk %>% filter(RRK_Region=="Central Coast Region")
 ```
 
+# Filter Hucs
+```{r}
+hucs
+```
+```{r}
+ccHucs = hucs %>% filter(RRK_Rgn =="Central Coast Region") %>% dplyr::select(huc12, RRK_Rgn)
+scHucs = hucs %>% filter(RRK_Rgn =="South Coast Region") %>% dplyr::select(huc12, RRK_Rgn)
+```
 # Reproject 
 ```{r}
-roads = st_transform(roads, crs = "EPSG:3310")
+roadps = st_transform(roadps, crs = "EPSG:3310")
+roadsc = st_transform(roadsc, crs = "EPSG:3310")
+roadcc = st_transform(roadcc, crs = "EPSG:3310")
 sc = st_transform(sc, crs = "EPSG:3310")
+cc = st_transform(cc, crs = "EPSG:3310")
+
+scHucs = st_transform(scHucs, crs = "EPSG:3310")
+ccHucs= st_transform(ccHucs, crs = "EPSG:3310")
 ```
 
 ## Check projections match
 ```{r}
-st_crs(sc) == st_crs(roads)
+st_crs(sc) == st_crs(roadsc)
 ```
-
+```{r}
+st_crs(cc) == st_crs(roadps)
+```
+```{r}
+road = roadsc
+```
 # Create and select Grid for roads
 ```{r}
 scGridRd <- st_make_grid(sc, square = T, cellsize = c(636.1494, 636.1494)) %>%
   st_sf() %>% 
   st_cast('POLYGON') %>%
-  st_join(., roads) %>% 
-  drop_na(LINEARID)
+  st_join(., road) %>% 
+  drop_na(linearid)
+
+```
+
+```{r}
+ccGridRd <- st_make_grid(cc, square = T, cellsize = c(636.1494, 636.1494)) %>%
+  st_sf() %>% 
+  st_cast('POLYGON') %>%
+  st_join(., roadcc) %>% 
+  drop_na(linearid)
 
 ```
 ## check data
@@ -60,14 +101,50 @@ scGridRd <- st_make_grid(sc, square = T, cellsize = c(636.1494, 636.1494)) %>%
 class(scGridRd)
 scGridRd
 ```
+
+```{r}
+class(ccGridRd)
+ccGridRd
+```
 ## Plot
 ```{r}
 ggplot() + geom_sf(data = scGridRd) + 
   theme_bw()
 ```
 
+# Select grids for Tx Hucs
+```{r}
+( ccTxGrid = st_join(ccGridRd, ccHucs, largest=TRUE))
+```
+
+```{r}
+( scTxGrid = st_join(scGridRd, scHucs, largest=TRUE))
+```
+
+```{r}
+scTxGrid1 = scTxGrid %>% drop_na(huc12)
+ccTxGrid1 = ccTxGrid %>% drop_na(huc12)
+```
+```{r}
+nrow(scGridRd)
+nrow(scTxGrid1)
+nrow(ccGridRd)
+nrow(ccTxGrid1)
+```
 # Write
 
 ```{r eval=FALSE, include=FALSE}
-st_write(scGridRd, "../outputs/GridRoad/scGridRd.shp", driver="ESRI Shapefile")
+st_write(scGridRd, "../outputs/GridRoad/scGridRoadAll.shp", driver="ESRI Shapefile")
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(ccGridRd, "../outputs/GridRoad/ccGridRoadAll.shp", driver="ESRI Shapefile")
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(ccTxGrid1, "../outputs/GridRoad/ccTxGridRoad.shp", driver="ESRI Shapefile")
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(scTxGrid1, "../outputs/GridRoad/scTxGridRoad.shp", driver="ESRI Shapefile")
 ```
