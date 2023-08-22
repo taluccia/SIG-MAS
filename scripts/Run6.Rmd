@@ -1,0 +1,74 @@
+---
+title: "Run6"
+author: "Anna Talucci"
+date: "7/22/2023"
+output: html_document
+---
+
+# Library
+```{r}
+library(tidyverse)
+library(sf)
+library(vroom)
+```
+
+
+# Data
+
+
+
+## List of rasters
+```{r}
+listRuns <- list.files(path="../data/runID6",pattern='csv$', full.names = TRUE)
+```
+
+```{r}
+listRuns
+```
+
+
+
+### Name items in a list with file name
+```{r}
+names(listRuns) <- tools::file_path_sans_ext(basename(listRuns))
+```
+
+```{r}
+listRuns
+```
+
+```{r}
+geousa <- function(list){
+  purrr::map(list, read.csv) %>%
+    map2(names(.), ~mutate(.x, VT = .y)) %>%
+  bind_rows() %>%
+    group_by(VT) %>%
+    summarize(TxSqM = sum(sum)) %>%
+    mutate(VT = ifelse(VT == "snClass1", "Herb",
+                                     ifelse(VT == "snClass2", "Shrub",
+                                            ifelse(VT == "snClass3", "Hardwood",
+                                                   ifelse(VT == "snClass4", "Softwood", "F"))))) %>%
+    mutate(totTxSqkm = ifelse(VT == "Herb", 10203,
+                                     ifelse(VT == "Shrub", 26841,
+                                            ifelse(VT == "Hardwood", 11996,
+                                                   ifelse(VT == "Softwood", 44567, "F"))))) %>%
+    mutate(totTxSqkm = as.numeric(totTxSqkm)) %>%
+    mutate(totTxSqM = totTxSqkm*1000000) %>%
+    mutate(prctTx = (TxSqM/totTxSqM)*100)
+}
+
+```
+For Herb (1), Shrub (2), Hardwood (3), softwood (4)
+herbsumsqkm	shrubsumsqkm	hardwoodsumsqkm	softwoodsumsqkm	vegsumsqkm
+10203	26841	11996	44567	93606
+```{r}
+SumArea = geousa(listRuns)
+```
+
+```{r}
+SumArea
+```
+
+```{r}
+write.csv(SumArea, "../outputs/RunId6PctTxByVegType.csv", row.names = F)
+```
