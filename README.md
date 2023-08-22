@@ -75,3 +75,6 @@ Available in `projects/pyregence-ee/assets/mas/`
 * `TxPrctRankRrkWip.Rmd` --shp (feature collection) This takes the `allHucsPrctRankWIP` and adds additional properties for factor math in AFE.  
 
 * `TxHucNumbers.Rmd`  --shp takes EE output and recombines separate RRK Regions into single shp. Adds properties for grouped percentiles, adds rank and percent rank for RFFC, which is calculated by multiplying the BP percent rank by the WUI percent WUI.   
+
+
+Road File from https://www.census.gov/cgi-bin/geo/shapefiles/index.php?year=2016&layergroup=Roads
