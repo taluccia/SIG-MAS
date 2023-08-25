@@ -107,7 +107,7 @@ class(ccGridRd)
 ccGridRd
 ```
 ## Plot
-```{r}
+```{r eval=FALSE, include=FALSE}
 ggplot() + geom_sf(data = scGridRd) + 
   theme_bw()
 ```
@@ -131,6 +131,7 @@ nrow(scTxGrid1)
 nrow(ccGridRd)
 nrow(ccTxGrid1)
 ```
+
 # Write
 
 ```{r eval=FALSE, include=FALSE}
@@ -148,3 +149,4 @@ st_write(ccTxGrid1, "../outputs/GridRoad/ccTxGridRoad.shp", driver="ESRI Shapefi
 ```{r eval=FALSE, include=FALSE}
 st_write(scTxGrid1, "../outputs/GridRoad/scTxGridRoad.shp", driver="ESRI Shapefile")
 ```
+

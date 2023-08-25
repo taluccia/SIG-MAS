@@ -48,7 +48,9 @@ sn = st_read("../data/sn/SN.shp", "SN")
 ```{r}
 projection = st_crs(rrk)
 ```
-
+```{r}
+st_crs(rrk)$proj4string
+```
 # Reproject HUCs
 ```{r}
 hucs_ab = st_transform(hucs, projection)

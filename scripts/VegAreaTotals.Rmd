@@ -27,9 +27,9 @@ sc30 = read.csv("../data/VegGrid/scVegAreaGrid30.csv")
 ```
 
 ```{r}
-ccPx = read.csv("../data/VegGrid/ccGridPxArea.csv")
+ccTx = read.csv("../data/VegGrid/ccGridTreat.csv")
 ```
-
+ccGridTreat
 ```{r}
 head(cc)
 head(ccPx)
@@ -53,4 +53,8 @@ ccPx %>% summarise(totalSqm = sum(sum),
 sc %>% summarise(totalSqm = sum(vegSum),
                  totalSqkm = (totalSqm/1000000),
                  toalAcres = (totalSqkm*247.1))
+```
+
+```{r}
+ccTx %>% summarise(totalSqm = sum(treatAcres))
 ```
