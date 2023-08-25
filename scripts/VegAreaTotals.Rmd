@@ -1,0 +1,56 @@
+---
+title: "Veg Area Grids"
+author: "Anna Talucci"
+date: "8/23/2023"
+output: html_document
+---
+
+
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+library(viridis)
+```
+
+# Data
+## Tx area
+```{r}
+cc = read.csv("../data/VegGrid/ccVegAreaGrid.csv")
+sc = read.csv("../data/VegGrid/scVegAreaGrid.csv")
+```
+
+```{r}
+cc30 = read.csv("../data/VegGrid/ccVegAreaGrid30.csv")
+sc30 = read.csv("../data/VegGrid/scVegAreaGrid30.csv")
+```
+
+```{r}
+ccPx = read.csv("../data/VegGrid/ccGridPxArea.csv")
+```
+
+```{r}
+head(cc)
+head(ccPx)
+head(sc)
+head(sc30)
+```
+# Area total
+
+```{r}
+cc %>% summarise(totalSqm = sum(vegSum),
+                 totalSqkm = (totalSqm/1e6),
+                 toalAcres = (totalSqkm*247.1))
+```
+
+```{r}
+ccPx %>% summarise(totalSqm = sum(sum),
+                 totalSqkm = (totalSqm/1e6),
+                 toalAcres = (totalSqkm*247.1))
+```
+```{r}
+sc %>% summarise(totalSqm = sum(vegSum),
+                 totalSqkm = (totalSqm/1000000),
+                 toalAcres = (totalSqkm*247.1))
+```
