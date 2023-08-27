@@ -80,21 +80,37 @@ road = roadsc
 ```
 # Create and select Grid for roads
 ```{r}
-scGridRd <- st_make_grid(sc, square = T, cellsize = c(636.1494, 636.1494)) %>%
+scGridRd <- st_make_grid(sc, square = T, cellsize = c(636.1494, 636.1494))%>%
+  cbind(data.frame(ID = sprintf(paste("GID%0",nchar(length(.)),"d",sep=""), 1:length(.)))) %>%
   st_sf() %>% 
   st_cast('POLYGON') %>%
-  st_join(., road) %>% 
+  st_join(., road, largest=TRUE) %>% 
   drop_na(linearid)
 
 ```
 
 ```{r}
+length(unique(scGridRd$ID))
+```
+```{r}
+scGridRd
+```
+
+```{r}
 ccGridRd <- st_make_grid(cc, square = T, cellsize = c(636.1494, 636.1494)) %>%
+  cbind(data.frame(ID = sprintf(paste("GID%0",nchar(length(.)),"d",sep=""), 1:length(.)))) %>%
   st_sf() %>% 
   st_cast('POLYGON') %>%
-  st_join(., roadcc) %>% 
+  st_join(., roadcc, largest=TRUE) %>% 
   drop_na(linearid)
 
+```
+
+```{r}
+length(unique(ccGridRd$ID))
+```
+```{r}
+ccGridRd
 ```
 ## check data
 ```{r}
@@ -132,21 +148,28 @@ nrow(ccGridRd)
 nrow(ccTxGrid1)
 ```
 
-# Write
+# Define projection
+```{r}
+projection = st_crs(rrk)
+```
+
+# Reproject
+```{r}
+ccTxGrid2 = st_transform(ccTxGrid1, projection)
+scTxGrid2 = st_transform(scTxGrid1, projection)
+```
+
+```{r}
+ccTxGrid2
+scTxGrid2
+```
+
+# Write to shapefile
 
 ```{r eval=FALSE, include=FALSE}
-st_write(scGridRd, "../outputs/GridRoad/scGridRoadAll.shp", driver="ESRI Shapefile")
+st_write(ccTxGrid2, "../outputs/GridRoad/ccTxGridRoad.shp", driver="ESRI Shapefile")
 ```
 
 ```{r eval=FALSE, include=FALSE}
-st_write(ccGridRd, "../outputs/GridRoad/ccGridRoadAll.shp", driver="ESRI Shapefile")
+st_write(scTxGrid2, "../outputs/GridRoad/scTxGridRoad.shp", driver="ESRI Shapefile")
 ```
-
-```{r eval=FALSE, include=FALSE}
-st_write(ccTxGrid1, "../outputs/GridRoad/ccTxGridRoad.shp", driver="ESRI Shapefile")
-```
-
-```{r eval=FALSE, include=FALSE}
-st_write(scTxGrid1, "../outputs/GridRoad/scTxGridRoad.shp", driver="ESRI Shapefile")
-```
-

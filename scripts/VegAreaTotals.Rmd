@@ -16,44 +16,27 @@ library(viridis)
 
 # Data
 ## Tx area
-```{r}
-cc = read.csv("../data/VegGrid/ccVegAreaGrid.csv")
-sc = read.csv("../data/VegGrid/scVegAreaGrid.csv")
-```
 
-```{r}
-cc30 = read.csv("../data/VegGrid/ccVegAreaGrid30.csv")
-sc30 = read.csv("../data/VegGrid/scVegAreaGrid30.csv")
-```
-
-```{r}
-ccTx = read.csv("../data/VegGrid/ccGridTreat.csv")
-```
 
 ```{r}
 ccTx = read.csv("../data/VegGrid/ccGridTx.csv")
 scTx = read.csv("../data/VegGrid/scGridTx.csv")
-ccProj = read.csv("../data/VegGrid/ccGridTxProj.csv")
-scProj = read.csv("../data/VegGrid/scGridTxProj.csv")
+```
+
+
+```{r}
+ccHucSW = read.csv("../data/VegGrid/ccTxHucSw.csv")
+scHucSW = read.csv("../data/VegGrid/scTxHucSw.csv")
 ```
 
 ```{r}
-ccHucs = read.csv("../data/VegGrid/ccGridTxHuc.csv")
-scHucs = read.csv("../data/VegGrid/scGridTxHuc.csv")
-```
-ccGridTreat
-```{r}
-head(cc)
-head(ccPx)
-head(sc)
-head(sc30)
+ccGridSw = read.csv("../data/VegGrid/ccTxGridSw.csv")
+scGridSw = read.csv("../data/VegGrid/scTxGridSw.csv")
 ```
 
 ```{r}
 head(ccTx)
-head(ccProj)
 head(scTx)
-head(scProj)
 ```
 
 ```{r}
@@ -81,15 +64,36 @@ sc %>% summarise(totalSqm = sum(vegSum),
 
 ```{r}
 ccTx %>% summarise(total = sum(treatAcres))
-ccProj %>% summarise(total = sum(treatAcres))
+
 ```
 
 ```{r}
 scTx %>% summarise(total = sum(treatAcres))
-scProj %>% summarise(total = sum(treatAcres))
+
 ```
 
 ```{r}
 ccHucs %>% summarise(total = sum(treatAcres))
 scHucs %>% summarise(total = sum(treatAcres))
+```
+
+# Softwood summarize
+
+```{r}
+( ccHucSW1 = ccHucSW %>% summarise(total = sum(treatAcres)) )
+( scHucSW1 = scHucSW %>% summarise(total = sum(treatAcres)) )
+```
+
+```{r}
+( ccGridSw1 = ccGridSw %>% summarise(total = sum(treatAcres)) )
+( scGridSw1 = scGridSw %>% summarise(total = sum(treatAcres)) )
+```
+
+## Softwood outside grids
+```{r}
+ccHucSW1-ccGridSw1
+```
+
+```{r}
+scHucSW1-scGridSw1
 ```
