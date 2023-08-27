@@ -32,6 +32,10 @@ ccgrid1 = st_read("../outputs/GridRoad/ccTxGridRoad.shp", "ccTxGridRoad")
 ```{r}
 scgrid1 = st_read("../outputs/GridRoad/scTxGridRoad.shp", "scTxGridRoad")
 ```
+
+```{r}
+ccgrid1
+```
 # Define projection
 ```{r}
 projection = st_crs(rrk)
@@ -42,6 +46,10 @@ projection = st_crs(rrk)
 ccTxGrid2 = st_transform(ccgrid1, projection)
 scTxGrid2 = st_transform(scgrid1, projection)
 ```
+
+
+
+
 
 ```{r eval=FALSE, include=FALSE}
 st_write(ccTxGrid2, "../outputs/GridRoad/ccTxGridRoadProj.shp", driver="ESRI Shapefile")

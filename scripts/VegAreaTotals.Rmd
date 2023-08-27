@@ -29,12 +29,36 @@ sc30 = read.csv("../data/VegGrid/scVegAreaGrid30.csv")
 ```{r}
 ccTx = read.csv("../data/VegGrid/ccGridTreat.csv")
 ```
+
+```{r}
+ccTx = read.csv("../data/VegGrid/ccGridTx.csv")
+scTx = read.csv("../data/VegGrid/scGridTx.csv")
+ccProj = read.csv("../data/VegGrid/ccGridTxProj.csv")
+scProj = read.csv("../data/VegGrid/scGridTxProj.csv")
+```
+
+```{r}
+ccHucs = read.csv("../data/VegGrid/ccGridTxHuc.csv")
+scHucs = read.csv("../data/VegGrid/scGridTxHuc.csv")
+```
 ccGridTreat
 ```{r}
 head(cc)
 head(ccPx)
 head(sc)
 head(sc30)
+```
+
+```{r}
+head(ccTx)
+head(ccProj)
+head(scTx)
+head(scProj)
+```
+
+```{r}
+head(ccHucs)
+head(scHucs)
 ```
 # Area total
 
@@ -56,5 +80,16 @@ sc %>% summarise(totalSqm = sum(vegSum),
 ```
 
 ```{r}
-ccTx %>% summarise(totalSqm = sum(treatAcres))
+ccTx %>% summarise(total = sum(treatAcres))
+ccProj %>% summarise(total = sum(treatAcres))
+```
+
+```{r}
+scTx %>% summarise(total = sum(treatAcres))
+scProj %>% summarise(total = sum(treatAcres))
+```
+
+```{r}
+ccHucs %>% summarise(total = sum(treatAcres))
+scHucs %>% summarise(total = sum(treatAcres))
 ```
