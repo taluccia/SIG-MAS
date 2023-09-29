@@ -5,8 +5,14 @@ date: "8/23/2023"
 output: html_document
 ---
 
+# Overview
+This scripts calculates treatment areas for the South Coast (SC) and Central Coast (CC) based on treatable area within road grids and softwood outside of the road grid. The road grid is a fish net of grid cells that are 100 acres by 100 acres, that were subset to include any grid cell that overlapped a road.
 
+Additionally, the code calculates the softwood area both within and outside the grid as well as the the other treatable area within the grid that is not softwood.
 
+Summary of TX area 
+-- for softwood outside grid and treatable area within the grid
+-- all softwood and then other
 # Packages
 ```{r}
 library(tidyverse)
@@ -15,85 +21,415 @@ library(viridis)
 ```
 
 # Data
-## Tx area
+## Hucs
+```{r}
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
 
+## Tx area in grids
 
 ```{r}
 ccTx = read.csv("../data/VegGrid/ccGridTx.csv")
 scTx = read.csv("../data/VegGrid/scGridTx.csv")
 ```
 
-
+## All softwood
 ```{r}
-ccHucSW = read.csv("../data/VegGrid/ccTxHucSw.csv")
-scHucSW = read.csv("../data/VegGrid/scTxHucSw.csv")
+ccSwAll = read.csv("../data/VegGrid/ccTxHucSw.csv")
+scSwAll = read.csv("../data/VegGrid/scTxHucSw.csv")
 ```
 
+## Softwood in grids
 ```{r}
-ccGridSw = read.csv("../data/VegGrid/ccTxGridSw.csv")
-scGridSw = read.csv("../data/VegGrid/scTxGridSw.csv")
+ccSwGrid = read.csv("../data/VegGrid/ccTxGridSw.csv")
+scSwGrid = read.csv("../data/VegGrid/scTxGridSw.csv")
 ```
 
+# View dataframe
 ```{r}
 head(ccTx)
 head(scTx)
 ```
 
 ```{r}
-head(ccHucs)
-head(scHucs)
+head(ccSwAll)
+head(scSwAll)
 ```
-# Area total
+
+# Select HUC SC/CC
 
 ```{r}
-cc %>% summarise(totalSqm = sum(vegSum),
-                 totalSqkm = (totalSqm/1e6),
-                 toalAcres = (totalSqkm*247.1))
+sc = hucs %>% filter(RRK_Rgn=='South Coast Region') %>% dplyr::select(huc12:RRK_Rgn, WuiPrct:states, TxWPrct:geometry) %>% mutate(huc12=as.numeric(huc12))
+cc = hucs %>% filter(RRK_Rgn=='Central Coast Region') %>% dplyr::select(huc12:RRK_Rgn, WuiPrct:states, TxWPrct:geometry) %>% mutate(huc12=as.numeric(huc12))
+```
+```{r}
+head(cc)
+head(sc)
+```
+
+# Glimpse at th SC data
+```{r}
+glimpse(sc)
+glimpse(scTx)
+glimpse(scSwAll)
+glimpse(scSwGrid)
+```
+
+# Tx area by HUC
+
+## For CC
+### Calculate softwood outside grid
+
+#### Softwood in grid
+```{r}
+( ccGridTxSw = ccSwGrid %>% 
+  group_by(huc12) %>%
+  summarize(TxGrdSw = sum(sum)) 
+)
+
+  
+```
+
+### Softwood Outside Grid
+
+```{r}
+( ccHucSw = ccSwAll %>% 
+  group_by(huc12) %>%
+  summarize(sumSw = sum(sum)) %>%
+    left_join(., ccGridTxSw, by='huc12') %>%
+    mutate(TxSw = sumSw-TxGrdSw)
+)
+  
+```
+## Tx in grid
+
+```{r}
+( ccGridTx = ccTx %>% 
+  group_by(huc12) %>%
+  summarize(TxGrd = sum(sum)) %>%
+    left_join(., ccHucSw , by='huc12') %>%
+    mutate(TxArea = TxGrd +TxSw) %>%
+    mutate_at(c(2:6), ~replace(., is.na(.), 0)) %>%
+    left_join(., cc, by='huc12')
+)
+```
+### check
+Correct
+```{r}
+sum(ccGridTx$TxArea)/1e6 *247.1
+```
+Correct
+```{r}
+sum(ccGridTx$TxGrd)/1e6 *247.1
+```
+### Propotion treatable by WUI percentile group
+
+```{r}
+( ccSum = ccGridTx%>% 
+  group_by(TxWPrct) %>%
+  summarise(SumGrd = sum(TxGrd),
+           SumSw = sum(TxSw),
+           SumArea = sum(TxArea)) %>%
+  mutate(propGrd = (SumGrd/SumArea), 
+         propSw = (SumSw/SumArea))
+)
+```
+
+#### Add prop values
+```{r}
+(
+  ccTxProp = ccGridTx %>%
+    mutate(WpropGd = ifelse(TxWPrct ==25, 0.9551088,
+                                     ifelse(TxWPrct ==50, 0.9254393,
+                                            ifelse(TxWPrct ==75, 0.8260733,
+                                                   ifelse(TxWPrct ==100, 0.8589781, 0))))) %>%
+    mutate(WpropSw = ifelse(TxWPrct ==25, 0.04489119,
+                                     ifelse(TxWPrct ==50, 0.07456068,
+                                            ifelse(TxWPrct ==75, 0.17392674,
+                                                   ifelse(TxWPrct ==100, 0.14102194, 0)))))
+)
+
+```
+
+### Propotion treatable by BP percentile group
+
+```{r}
+( BccSum = ccGridTx%>% 
+  group_by(TxBpPrc) %>%
+  summarise(SumGrd = sum(TxGrd),
+           SumSw = sum(TxSw),
+           SumArea = sum(TxArea)) %>%
+  mutate(propGrd = (SumGrd/SumArea), 
+         propSw = (SumSw/SumArea))
+)
+```
+
+#### Add prop values burn
+```{r}
+(
+  ccTxPropB = ccTxProp %>%
+    mutate(BpropGd = ifelse(TxBpPrc ==25, 0.9193357,
+                                     ifelse(TxBpPrc ==50, 0.8972431,
+                                            ifelse(TxBpPrc ==75, 0.8623639,
+                                                   ifelse(TxBpPrc ==100, 0.8744148, 0))))) %>%
+    mutate(BpropSw = ifelse(TxBpPrc ==25, 0.08066433,
+                                     ifelse(TxBpPrc ==50, 0.10275693,
+                                            ifelse(TxBpPrc ==75, 0.13763610,
+                                                   ifelse(TxBpPrc ==100, 0.12558520, 0)))))
+)
+
+```
+
+### Propotion treatable by rffc percentile group
+
+```{r}
+( RccSum = ccGridTx%>% 
+  group_by(TxRffcP) %>%
+  summarise(SumGrd = sum(TxGrd),
+           SumSw = sum(TxSw),
+           SumArea = sum(TxArea)) %>%
+  mutate(propGrd = (SumGrd/SumArea), 
+         propSw = (SumSw/SumArea))
+)
+```
+
+#### Add prop values burn
+```{r}
+(
+  ccTxPropR = ccTxPropB %>%
+    mutate(RpropGd = ifelse(TxRffcP ==25, 0.8990523,
+                                     ifelse(TxRffcP ==50, 0.9265067,
+                                            ifelse(TxRffcP ==75, 0.9023796,
+                                                   ifelse(TxRffcP ==100, 0.8294556, 0))))) %>%
+    mutate(RpropSw = ifelse(TxRffcP ==25, 0.10094775,
+                                     ifelse(TxRffcP ==50, 0.07349332,
+                                            ifelse(TxRffcP ==75, 0.09762043,
+                                                   ifelse(TxRffcP ==100, 0.17054438, 0)))))
+)
+
+```
+
+## For SC
+### SW in grid
+```{r}
+scSwGrid %>% 
+  group_by(huc12) %>%
+  summarize(ct = unique(huc12)) 
+```
+```{r}
+( scGridTxSw = scSwGrid %>% 
+  group_by(huc12) %>%
+  summarize(TxGrdSw = sum(sum)) 
+)
+
+  
+```
+
+### SW Outside Grid
+
+```{r}
+( scHucSw = scSwAll %>% 
+  group_by(huc12) %>%
+  summarize(sumSw = sum(sum)) 
+)
+```
+
+%>%
+    left_join(., scGridTxSw, by='huc12') %>%
+    mutate(TxSw = sumSw-TxGrdSw) 
+## Tx in grid
+
+```{r}
+( scGridTx = scTx %>% 
+  group_by(huc12) %>%
+  summarize(TxGrd = sum(sum)) 
+)
+
+  
+```
+%>%
+    left_join(., scHucSw, by='huc12') %>%
+    mutate(TxArea = TxGrd +TxSw) %>%
+    mutate_at(c(2:6), ~replace(., is.na(.), 0)) %>%
+    left_join(., sc, by='huc12')
+```{r}
+varList1<- names(scGridTxSw)[!(names(scGridTxSw) %in% names(sc))] # get non common names
+varList1<- c(varList1,"huc12") # appending key parameter
+
+varList2<- names(scHucSw)[!(names(scHucSw) %in% names(sc))] # get non common names
+varList2<- c(varList2,"huc12") # appending key parameter
+
+varList3<- names(scGridTx)[!(names(scGridTx) %in% names(sc))] # get non common names
+varList3<- c(varList3,"huc12") # appending key parameter
+```
+combined <- df1 %>% left_join((df2 %>% select(varList)), by="id")
+
+
+```{r}
+(
+scCombine = sc %>% 
+  left_join((scGridTxSw %>% select(varList1)), by='huc12') %>%
+  left_join((scHucSw %>% select(varList2)), by='huc12') %>%
+  left_join((scGridTx %>% select(varList3)), by='huc12') %>%
+  mutate_at(c('TxGrdSw', 'sumSw', 'TxGrd'), ~replace(., is.na(.), 0)) %>%
+    mutate(TxSw = sumSw-TxGrdSw) %>%
+    mutate(TxArea = TxGrd +TxSw)
+)
+```
+
+
+
+#### check
+
+```{r}
+sum(scCombine$TxArea)/1e6 *247.1
+```
+Correct
+```{r}
+sum(scCombine$TxGrd)/1e6 *247.1
+```
+```{r}
+sum(scCombine$sumSw)/1e6 *247.1
+```
+```{r}
+sum(scCombine$TxSw)/1e6 *247.1
+```
+#### Propotion treatable by WUI percentile group
+
+```{r}
+( scSum = scCombine %>% 
+  group_by(TxWPrct) %>%
+  summarise(SumGrd = sum(TxGrd),
+           SumSw = sum(TxSw),
+           SumArea = sum(TxArea)) %>%
+  mutate(propGrd = (SumGrd/SumArea), 
+         propSw = (SumSw/SumArea))
+)
+```
+#### Add prop values
+```{r}
+(
+  scTxProp = scCombine %>%
+    mutate(WpropGd = ifelse(TxWPrct ==25, 0.8502065,
+                                     ifelse(TxWPrct ==50, 0.7303538,
+                                            ifelse(TxWPrct ==75, 0.5830644,
+                                                   ifelse(TxWPrct ==100, 0.4819032, 0))))) %>%
+    mutate(WpropSw = ifelse(TxWPrct ==25, 0.1497935,
+                                     ifelse(TxWPrct ==50, 0.2696462,
+                                            ifelse(TxWPrct ==75, 0.4169356,
+                                                   ifelse(TxWPrct ==100, 0.5180968, 0)))))
+)
+
+```
+
+#### Propotion treatable by BP percentile group
+
+```{r}
+( scSumB = scCombine %>% 
+  group_by(TxBpPrc) %>%
+  summarise(SumGrd = sum(TxGrd),
+           SumSw = sum(TxSw),
+           SumArea = sum(TxArea)) %>%
+  mutate(propGrd = (SumGrd/SumArea), 
+         propSw = (SumSw/SumArea))
+)
+```
+#### Add prop values
+```{r}
+(
+  scTxPropB = scTxProp %>%
+    mutate(BpropGd = ifelse(TxBpPrc ==25, 0.6289974,
+                                     ifelse(TxBpPrc ==50, 0.5874381,
+                                            ifelse(TxBpPrc ==75, 0.6425304,
+                                                   ifelse(TxBpPrc ==100, 0.8090013, 0))))) %>%
+    mutate(BpropSw = ifelse(TxBpPrc ==25, 0.3710026,
+                                     ifelse(TxBpPrc ==50, 0.4125619,
+                                            ifelse(TxBpPrc ==75, 0.3574696,
+                                                   ifelse(TxBpPrc ==100, 0.1909987, 0)))))
+)
+
+```
+
+#### Propotion treatable by BP percentile group
+
+```{r}
+( scSumR = scCombine %>% 
+  group_by(TxRffcP) %>%
+  summarise(SumGrd = sum(TxGrd),
+           SumSw = sum(TxSw),
+           SumArea = sum(TxArea)) %>%
+  mutate(propGrd = (SumGrd/SumArea), 
+         propSw = (SumSw/SumArea))
+)
+```
+#### Add prop values
+```{r}
+(
+  scTxPropR = scTxPropB %>%
+    mutate(RpropGd = ifelse(TxRffcP ==25, 0.7199853,
+                                     ifelse(TxRffcP ==50, 0.6833024,
+                                            ifelse(TxRffcP ==75, 0.5883459,
+                                                   ifelse(TxRffcP ==100, 0.6090459, 0))))) %>%
+    mutate(RpropSw = ifelse(TxRffcP ==25, 0.2800147,
+                                     ifelse(TxRffcP ==50, 0.3166976,
+                                            ifelse(TxRffcP ==75, 0.4116541,
+                                                   ifelse(TxRffcP ==100, 0.3909541, 0)))))
+)
+
+```
+# difference in SC dataframes
+```{r eval=FALSE, include=FALSE}
+dropgeosc = sc %>% st_drop_geometry() %>% dplyr::select(huc12)
+selscgrdtx = scGridTx %>% dplyr::select(huc12)
+missingHucs = setdiff(dropgeosc, selscgrdtx)
+missingHucs
+```
+# combine CC and SC 
+
+```{r}
+( 
+  CcSc = bind_rows(ccTxPropR, scTxPropR)
+)
 ```
 
 ```{r}
-ccPx %>% summarise(totalSqm = sum(sum),
-                 totalSqkm = (totalSqm/1e6),
-                 toalAcres = (totalSqkm*247.1))
+colnames(CcSc)
 ```
-```{r}
-sc %>% summarise(totalSqm = sum(vegSum),
-                 totalSqkm = (totalSqm/1000000),
-                 toalAcres = (totalSqkm*247.1))
-```
+# Write to shapefile
 
-```{r}
-ccTx %>% summarise(total = sum(treatAcres))
-
+```{r eval=FALSE, include=FALSE}
+st_write(CcSc, "../outputs/hucsShp/TxHucScCc.shp", driver="ESRI Shapefile")
 ```
+RRK	Tx Acres in Grids	Softwood Acres outside Grid	Total treatable Veg Acres
+CC	4,209,389	    534,444	    4,743,833
+SC	3,916,346	    2,086,162	  6,002,508
+
 
 ```{r}
-scTx %>% summarise(total = sum(treatAcres))
-
+CcSc %>% filter(huc12==180500040401)
 ```
+
+
+# Summarize treatable area
 
 ```{r}
-ccHucs %>% summarise(total = sum(treatAcres))
-scHucs %>% summarise(total = sum(treatAcres))
+
+CcSc
 ```
 
-# Softwood summarize
-
-```{r}
-( ccHucSW1 = ccHucSW %>% summarise(total = sum(treatAcres)) )
-( scHucSW1 = scHucSW %>% summarise(total = sum(treatAcres)) )
-```
+## TotalTreatable Softwood
 
 ```{r}
-( ccGridSw1 = ccGridSw %>% summarise(total = sum(treatAcres)) )
-( scGridSw1 = scGridSw %>% summarise(total = sum(treatAcres)) )
+CcSc %>% group_by(RRK_Rgn, TxWPrct) %>% summarise(total = sum(sumSw)) %>% mutate(TxSW = total/1e6 *247.1)
+CcSc %>% group_by(RRK_Rgn, TxBpPrc) %>% summarise(total = sum(sumSw)) %>% mutate(TxSW = total/1e6 *247.1)
+CcSc %>% group_by(RRK_Rgn, TxRffcP) %>% summarise(total = sum(sumSw)) %>% mutate(TxSW = total/1e6 *247.1)
+```
+## Total Other treatable in Grid
+```{r}
+CcSc %>% group_by(RRK_Rgn, TxWPrct) %>% mutate(gridOther = TxGrd-TxGrdSw) %>% summarise(totalOther = sum(gridOther)) %>% mutate(TxOther = totalOther/1e6 *247.1)
+
+CcSc %>% group_by(RRK_Rgn, TxBpPrc) %>% mutate(gridOther = TxGrd-TxGrdSw) %>% summarise(totalOther = sum(gridOther)) %>% mutate(TxOther = totalOther/1e6 *247.1)
+
+CcSc %>% group_by(RRK_Rgn, TxRffcP) %>% mutate(gridOther = TxGrd-TxGrdSw) %>% summarise(totalOther = sum(gridOther)) %>% mutate(TxOther = totalOther/1e6 *247.1)
 ```
 
-## Softwood outside grids
-```{r}
-ccHucSW1-ccGridSw1
-```
-
-```{r}
-scHucSW1-scGridSw1
-```
