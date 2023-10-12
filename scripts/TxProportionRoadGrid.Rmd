@@ -1,0 +1,79 @@
+---
+title: "Proportion Road grid per Huc"
+author: "Anna Talucci"
+date: "9/18/2023"
+output: html_document
+---
+
+
+# Overview
+Calculate proportion of road grid area by percentile groups
+
+Treatable area = Road grid + softwood
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+```
+
+# Data
+## Hucs
+```{r}
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
+
+
+```{r}
+ccRg = st_read("../data/GridRoad/ccTxGridRoad.shp", "ccTxGridRoad")
+```
+
+```{r}
+scRg = st_read("../data/GridRoad/scTxGridRoad.shp", "scTxGridRoad")
+```
+
+
+# Table
+```{r}
+hucs
+```
+
+```{r}
+ccRg
+```
+
+```{r}
+scRg
+```
+
+# Select HUC SC/CC
+
+```{r}
+sc = hucs %>% filter(RRK_Rgn=='South Coast Region')
+cc = hucs %>% filter(RRK_Rgn=='Central Coast Region')
+```
+
+# Summarize road grid area by huc
+```{r}
+ccGridArea = ccRg %>% 
+  mutate(gridArea = 404686.059) %>% # area in square meters
+  group_by(huc12) %>%
+  summarize(sumGridArea = sum(gridArea)) %>%
+  st_drop_geometry()
+
+  
+```
+
+```{r}
+scGridArea = scRg %>% 
+  mutate(gridArea = 404686.059) %>% # area in square meters
+  group_by(huc12) %>%
+  summarize(sumGridArea = sum(gridArea)) %>%
+  st_drop_geometry()
+
+  
+```
+
+# Grid area to HUCS
+```{r}
+sc %>% left_join(., scGridArea, by='huc12')
+```

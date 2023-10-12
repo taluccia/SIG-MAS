@@ -1,0 +1,44 @@
+---
+title: "HUC Exterior Boundary"
+author: "Anna Talucci"
+date: "10/2/2023"
+output: html_document
+---
+
+# Overview
+Create exterior boundary for SN and NC HUCS.
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+library(nngeo)
+```
+
+# Data
+
+
+## HUC12
+```{r}
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
+
+# Filter by RRK
+```{r}
+( sn = hucs %>% filter(RRK_Rgn=="Sierra Nevada Region") %>% dplyr::select(RRK_Rgn) %>% st_buffer(1000) %>% st_union() )
+( nc = hucs %>% filter(RRK_Rgn=="North Coast Region") %>% dplyr::select(RRK_Rgn) %>% st_buffer(3000) %>% st_union() )
+```
+```{r}
+sn_poly = nngeo::st_remove_holes(sn)
+nc_poly = nngeo::st_remove_holes(nc)
+```
+```{r}
+plot(st_geometry(sn_poly))
+plot(st_geometry(nc_poly))
+```
+
+# Write Shp to file
+```{r eval=FALSE, include=FALSE}
+st_write(sn_poly, "../outputs/SnHucExtBound.shp", driver="ESRI Shapefile")
+st_write(nc_poly, "../outputs/NcHucExtBound.shp", driver="ESRI Shapefile")
+```

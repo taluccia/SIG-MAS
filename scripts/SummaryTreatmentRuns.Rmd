@@ -1,0 +1,82 @@
+---
+title: "Summarize Treatment Runs"
+author: "Anna Talucci"
+date: "10/11/2023"
+output: html_document
+---
+
+# Overview
+Summary product for MAS: acres treated per year by region by veg type. Forest/woodland/shrub/grass
+
+One table, columns = region, priority, treatment intensity (500k, 1m, 2.3 mil), and Years (1-5, 6-10, 11-15, 16-20; equivalent to percentile group)
+
+
+
+# Library
+```{r}
+library(tidyverse)
+library(sf)
+library(vroom)
+library(tidyr)
+```
+
+
+# Data
+
+## List of csv files
+```{r}
+listRuns <- list.files(path="../data/RunIDVeg",pattern='csv$', full.names = TRUE)
+```
+
+```{r}
+listRuns
+```
+
+
+
+### Name items in a list with file name
+```{r}
+names(listRuns) <- tools::file_path_sans_ext(basename(listRuns))
+```
+
+```{r}
+listRuns
+```
+# Functions
+```{r}
+geousa <- function(list){
+  purrr::map(list, read.csv) %>%
+    map2(names(.), ~mutate(.x, Tx = .y)) %>%
+  bind_rows() %>%
+    separate(., Tx, into = c("VegClass", "RunId", "RRK", "Priority", "TxIntense", "dateProc"), sep = '_', convert=TRUE, extra='merge') %>%
+    group_by(tx_type, VegClass, RRK, Priority, TxIntense) %>%
+     summarize(TxSqM = sum(sum)) %>%
+    mutate(vegType = ifelse(VegClass == "Class1", "Herb",
+                                     ifelse(VegClass == "Class2", "Shrub",
+                                            ifelse(VegClass == "Class3", "Hardwood",
+                                                   ifelse(VegClass == "Class4", "Softwood", "F"))))) %>%
+    mutate(TxAcres = TxSqM/4047) %>%
+    dplyr::select(RRK, Priority, TxIntense, tx_type, VegClass, vegType, TxSqM, TxAcres)
+}
+
+```
+
+    mutate(totTxSqkm = ifelse(VT == "Herb", 10203,
+                                     ifelse(VT == "Shrub", 26841,
+                                            ifelse(VT == "Hardwood", 11996,
+                                                   ifelse(VT == "Softwood", 44567, "F"))))) %>%
+    mutate(totTxSqkm = as.numeric(totTxSqkm)) %>%
+    mutate(totTxSqM = totTxSqkm*1000000) %>%
+    mutate(prctTx = (TxSqM/totTxSqM)*100)
+    
+    
+For Herb (1), Shrub (2), Hardwood (3), softwood (4)
+
+```{r}
+( run = geousa(listRuns) )
+```
+
+# Write Summary Table
+```{r}
+write.csv(SumArea, "../outputs/RunId6PctTxByVegType.csv", row.names = F)
+```
