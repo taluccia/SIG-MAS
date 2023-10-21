@@ -1,0 +1,92 @@
+---
+title: "Working with RAT"
+author: "Anna Talucci"
+date: "10/15/2023"
+output: html_document
+---
+
+# Overview
+Create exterior boundary for SN and NC HUCS.
+
+# Packages
+```{r}
+library(raster)
+library(rgdal)
+library(foreign)
+```
+
+```{r}
+r = raster("../data/treeMap/TreeMap2016.tif")
+r
+```
+
+```{r}
+ca <- readOGR("../outputs/California_TMProj.shp")
+```
+
+```{r}
+db = read.dbf(file = "../data/treeMap/TreeMap2016.tif.vat.dbf")
+```
+
+```{r}
+db
+```
+#  Next step
+```{r}
+#crop TreeMap to the project
+treemap_AOI <- crop(r, extent(ca))
+```
+
+```{r}
+# mask TreeMap to the project
+treemap_project <- mask(treemap_AOI, ca)
+```
+
+```{r}
+( db = db %>% mutate(cn_id = as.numeric(CN)) )
+```
+
+```{r}
+min(db$CANOPYPCT)
+max(db$CANOPYPCT)
+```
+
+```{r}
+
+( canopy = reclassify(r, as.matrix(db[,c(28,11)])) )
+```
+
+
+```{r}
+raster::writeRaster(canopy, '../outputs/canopy.tif')
+```
+
+
+
+```{r}
+c = raster("../outputs/canopy.tif")
+c
+```
+
+```{r}
+plot(c)
+```
+
+```{r}
+cx <- deratify(r, "CANOPYPCT")
+```
+```{r}
+plot(c)
+```
+#########
+```{r}
+# Get list of stands within project area
+project_stands <- (getValues(treemap_project)) # retrieves pixel values as vector
+project_stands <- project_stands[!is.na(project_stands)] # removes NA - the areas masked out
+project_stands <- unique(project_stands) # returns only unique values
+```
+
+```{r}
+# read in csv of all trees that comes with TreeMap2016 download
+all_trees = read.csv(file = "../data/treeMap/TreeMap2016_tree_table.csv")
+```

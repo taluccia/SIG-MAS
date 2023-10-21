@@ -1,0 +1,88 @@
+---
+title: "Join Tx Runs and Huc"
+author: "Anna Talucci"
+date: "10/20/2023"
+output: html_document
+---
+
+
+# Overview
+Join Tx runs to hucs so they have majority HUC ID for summarizing. 
+
+Final shapefile is uploaded to GEE to extract vegetation type, then exported as csv to summarize in R.
+
+
+# Library
+```{r}
+library(tidyverse)
+library(sf)
+library(vroom)
+library(tidyr)
+```
+
+
+# Data
+## HUC12
+```{r}
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
+
+## List of shp files
+```{r}
+listRuns <- list.files(path="../data/MAS_FCATtreatments",pattern='shp$', full.names = TRUE)
+```
+
+```{r}
+listRuns
+```
+
+### Name items in a list with file name
+```{r}
+names(listRuns) <- tools::file_path_sans_ext(basename(listRuns))
+```
+
+```{r}
+listRuns
+```
+
+```{r}
+combine <- function(list){
+  purrr::map(list, st_read) %>%
+    map2(names(.), ~mutate(.x, Tx = .y)) %>%
+  bind_rows() %>%
+    separate(., Tx, into = c("VegClass", "RunId", "RRK", "Priority", "TxIntense", "dateProc"), sep = '_', convert=TRUE, extra='merge')
+}
+```
+
+```{r}
+(shp = combine(listRuns))
+```
+
+# Reproject
+```{r}
+hucs_proj = st_transform(hucs, crs=st_crs(shp))
+```
+# Join
+```{r}
+( joinTxHuc = st_join(st_make_valid(shp), st_make_valid(hucs_proj), largest=TRUE))
+```
+
+```{r}
+joinTxHuc
+```
+
+```{r}
+txHucs = joinTxHuc %>% 
+  dplyr::select(kcp_exists, count, tx_code, tx_type, VegClass, RRK, Priority, TxIntense, huc12) %>%
+  rename(RunId = VegClass)
+```
+
+```{r}
+txHucs
+```
+
+# Write to shapefile
+
+```{r eval=FALSE, include=FALSE}
+st_write(txHucs, "../outputs/TxRunsHucs.shp", driver="ESRI Shapefile")
+```

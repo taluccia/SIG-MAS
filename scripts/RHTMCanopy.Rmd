@@ -1,0 +1,46 @@
+---
+title: "RH Canopy Tif"
+author: "Anna Talucci"
+date: "10/18/2023"
+output: html_document
+---
+
+# Overview
+Create exterior boundary for SN and NC HUCS.
+
+# Packages
+```{r}
+library(raster)
+library(rgdal)
+library(foreign)
+```
+
+```{r}
+canopy16 = raster("../data/TM16_CanPer/TM16_CanPer.tif")
+canopy16
+```
+```{r}
+class(canopy16[1])
+```
+
+```{r}
+str(canopy16)
+```
+```{r}
+
+dataType(canopy16)
+```
+```{r}
+s <- writeRaster(canopy16, '../outputs/TMCanopy2016INT2U.tif', datatype='INT2U', overwrite=TRUE)
+dataType(s)
+```
+```{r}
+plot(s)
+```
+```{r}
+str(s)
+```
+
+```{r}
+plot(canopy16)
+```
