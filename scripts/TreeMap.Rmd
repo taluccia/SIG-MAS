@@ -15,6 +15,7 @@ library(sf)
 library(raster)
 library(rgdal)
 library(terra)
+
 ```
 
 # Data
@@ -29,31 +30,28 @@ states = st_read("../data/State_boundaries/tl_2022_us_state.shp", "tl_2022_us_st
   states_aoi = states %>% filter(NAME =="California")
 )
 ```
-
+# Write Shp to file
+```{r eval=FALSE, include=FALSE}
+st_write(states_aoi, "../outputs/California.shp", driver="ESRI Shapefile")
+```
 
 ## HUC12
 ```{r}
 hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
 ```
-
+## Raster
 ```{r}
-tm = raster("../data/treeMap/TreeMap2016.tif")
-tm
+tm_raster = raster("../data/treeMap/TreeMap2016.tif")
+tm_raster
 ```
 
 ```{r}
-r = rast("../data/treeMap/TreeMap2016.tif")
-r
+tm_terra = rast("../data/treeMap/TreeMap2016.tif")
+tm_terra
 ```
 
-```{r}
-crs(tm)
-```
 
-```{r}
-tm
-```
-
+# Projections & reproject
 ```{r}
 proj = "+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 +y_0=0 +datum=NAD83 +units=m+no_defs"
 ```
@@ -62,9 +60,78 @@ proj = "+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 +y_0=0 +da
 ca = st_transform(states_aoi, crs = "+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs")
 ```
 
-```{r}
-st_crs(ca)
+# Write Shp to file
+```{r eval=FALSE, include=FALSE}
+st_write(ca, "../outputs/California_TMProj.shp", driver="ESRI Shapefile")
 ```
+# Crop Rasters
+
+```{r}
+v= vect(ca)
+canopy_ca = mask(canopy16, v)
+```
+
+```{r}
+canopy_ca
+```
+
+```{r}
+plot(canopy_ca)
+```
+
+```{r}
+canopy_ca[canopy_ca < 100] <- NA
+mask_ca = mask(canopy_ca, m)
+```
+
+
+```{r}
+tm_terra_crop = crop(tm_terra, extent(ca))
+tm_raster_crop = crop(tm_raster, extent(ca))
+```
+```{r}
+plot(tm_terra_crop)
+```
+
+```{r}
+plot(tm_raster_crop)
+```
+
+# Test
+```{r}
+set.seed(1)
+tm_raster_canopy <- deratify(tm_raster_crop, "CANOPYPCT")
+
+tm_raster_canopy
+```
+
+```{r}
+set.seed(1)
+tm_terra_canopy <- deratify(tm_terra_crop, "CANOPYPCT")
+
+tm_terra_canopy
+```
+
+
+
+
+
+```{r}
+lev <- levels(tm_terra_crop)[[1]]
+
+lev <- lev[, c('CN', 'CANOPYPCT')]
+
+
+
+levels(tm_terra_crop) <- lev
+plot(tm_terra_crop)
+```
+# Visualize
+
+
+
+
+# Not working
 # Clip tree map to CA
 ```{r}
 treemap_AOI <- crop(tm, extent(ca))
@@ -86,9 +153,7 @@ cats(tm)
 ```{r}
 treemap_project
 ```
-```{r}
-canopy <- (getValues(treemap_project@CANOPYPCT))
-```
+
 
 
 
@@ -97,6 +162,10 @@ canopy <- deratify(r_AOI, "CANOPYPCT")
 canopy
 ```
 
+```{r}
+canopy1 <- ratify(tm, "CANOPYPCT")
+canopy1
+```
 
 
 ```{r}
