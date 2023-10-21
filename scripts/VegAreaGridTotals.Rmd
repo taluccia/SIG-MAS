@@ -268,9 +268,9 @@ combined <- df1 %>% left_join((df2 %>% select(varList)), by="id")
 ```{r}
 (
 scCombine = sc %>% 
-  left_join((scGridTxSw %>% select(varList1)), by='huc12') %>%
-  left_join((scHucSw %>% select(varList2)), by='huc12') %>%
-  left_join((scGridTx %>% select(varList3)), by='huc12') %>%
+  left_join((scGridTxSw %>% select(varList1)), by='huc12') %>% # TX sw in grid
+  left_join((scHucSw %>% select(varList2)), by='huc12') %>% # Tx sw in Huc
+  left_join((scGridTx %>% select(varList3)), by='huc12') %>% # Tx area in grid
   mutate_at(c('TxGrdSw', 'sumSw', 'TxGrd'), ~replace(., is.na(.), 0)) %>%
     mutate(TxSw = sumSw-TxGrdSw) %>%
     mutate(TxArea = TxGrd +TxSw)
