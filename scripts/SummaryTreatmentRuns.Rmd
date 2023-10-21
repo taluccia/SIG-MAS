@@ -61,6 +61,14 @@ geousa <- function(list){
 
 ```
 
+```{r}
+combine <- function(list){
+  purrr::map(list, read.csv) %>%
+    map2(names(.), ~mutate(.x, Tx = .y)) %>%
+  bind_rows() %>%
+    separate(., Tx, into = c("VegClass", "RunId", "RRK", "Priority", "TxIntense", "dateProc"), sep = '_', convert=TRUE, extra='merge')
+}
+```
     mutate(totTxSqkm = ifelse(VT == "Herb", 10203,
                                      ifelse(VT == "Shrub", 26841,
                                             ifelse(VT == "Hardwood", 11996,
@@ -76,7 +84,15 @@ For Herb (1), Shrub (2), Hardwood (3), softwood (4)
 ( run = geousa(listRuns) )
 ```
 
+```{r}
+
+(huc_runs = combine(listRuns))
+```
+
+
+
+
 # Write Summary Table
 ```{r}
-write.csv(SumArea, "../outputs/RunId6PctTxByVegType.csv", row.names = F)
+write.csv(run, "../outputs/SummarizeMasFcatRuns.csv", row.names = F)
 ```
