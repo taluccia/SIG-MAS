@@ -1,0 +1,92 @@
+---
+title: "Summary TX run Hucs"
+author: "Anna Talucci"
+date: "10/22/2023"
+output: html_document
+---
+
+
+# Overview
+Summary product for MAS: acres treated per year by region by veg type. Forest/woodland/shrub/grass
+
+One table, columns = region, priority, treatment intensity (500k, 1m, 2.3 mil), and Years (1-5, 6-10, 11-15, 16-20; equivalent to percentile group)
+
+# Global options
+prevent scientific notation; use =0 to reset
+```{r}
+options(scipen=999)
+```
+
+# Library
+```{r}
+library(tidyverse)
+library(sf)
+library(vroom)
+library(tidyr)
+```
+
+
+# Data
+
+## List of csv files
+
+```{r}
+listRuns <- list.files(path="../data/HUCRunIdVeg",pattern='csv$', full.names = TRUE)
+```
+
+```{r}
+listRuns
+```
+
+
+
+### Name items in a list with file name
+```{r}
+names(listRuns) <- tools::file_path_sans_ext(basename(listRuns))
+```
+
+```{r}
+listRuns
+```
+# Functions
+For Herb (1), Shrub (2), Hardwood (3), softwood (4)
+```{r}
+geousa <- function(list){
+  purrr::map(list, read.csv) %>%
+    map2(names(.), ~mutate(.x, Tx = .y)) %>%
+  bind_rows() %>%
+    separate(., Tx, into = c("VegClass", "Run"), sep = '_', convert=TRUE, extra='merge') %>%
+    group_by(tx_type, VegClass, RRK, Priority, TxIntense, RunId, huc12) %>%
+     summarize(TxSqM = sum(sum)) %>%
+    mutate(vegType = ifelse(VegClass == "Class1", "Herb",
+                                     ifelse(VegClass == "Class2", "Shrub",
+                                            ifelse(VegClass == "Class3", "Hardwood",
+                                                   ifelse(VegClass == "Class4", "Softwood", "F"))))) %>%
+    mutate(TxAcres = round(TxSqM/4047, 1)) %>%
+    dplyr::select(RRK, Priority, TxIntense, huc12, RunId, tx_type, VegClass, vegType, TxSqM, TxAcres)
+}
+
+```
+
+# Apply function to list
+```{r}
+( run = geousa(listRuns) )
+```
+
+# Check data
+
+```{r}
+( new_DF <- run[rowSums(is.na(run)) > 0,] )
+```
+```{r}
+sum(new_DF$TxAcres)
+
+```
+```{r}
+run %>% filter(RRK =="CC")
+```
+
+# Write Summary Table
+```{r}
+write.csv(run, "../outputs/SummarizeMasFcatHUCRuns.csv", row.names = F)
+```
