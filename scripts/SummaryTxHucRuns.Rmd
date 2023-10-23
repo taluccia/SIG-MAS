@@ -86,7 +86,13 @@ sum(new_DF$TxAcres)
 run %>% filter(RRK =="CC")
 ```
 
+```{r}
+unique(sort(run$RunId))
+```
+```{r}
+run1 = run %>% drop_na(huc12) 
+```
 # Write Summary Table
 ```{r}
-write.csv(run, "../outputs/SummarizeMasFcatHUCRuns.csv", row.names = F)
+write.csv(run1, "../outputs/SummarizeMasFcatHUCRuns.csv", row.names = F)
 ```
