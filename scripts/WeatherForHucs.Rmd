@@ -1,0 +1,367 @@
+---
+title: "Weather for Hucs"
+author: "Anna Talucci"
+date: "11/18/2023"
+output: html_document
+---
+
+
+
+# Overview
+
+Filter weather data extracted from EE. Join weather data to Hucs. Convert from .shp to .json.
+
+# Global options
+prevent scientific notation; use =0 to reset
+```{r}
+options(scipen=999)
+```
+
+# Packages
+```{r}
+library('tidyverse')
+library('sf')
+```
+
+# Data
+
+## HUC Shapefiles
+TxHucScCc.shp
+```{r}
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
+
+```{r}
+hucsScCc = st_read("../data/TxHucs/TxHucScCc.shp", "TxHucScCc")
+```
+```{r}
+scHuc = hucsScCc %>% filter(RRK_Rgn == "South Coast Region")
+ccHuc = hucsScCc %>% filter(RRK_Rgn == "Central Coast Region")
+```
+
+## CSV weather data
+
+```{r}
+list <- list.files(path="../data/weather", pattern='csv$', full.names = TRUE)
+```
+
+# Function to combine CSV
+## Combine, Clean, and organize
+```{r}
+combineCsv <- function(list){
+  purrr::map(list, read.csv) %>%
+  bind_rows() %>%
+    dplyr::select(-system.index, -.geo) %>%
+    pivot_longer(cols = starts_with("GF"),
+    names_to = "variable",
+    values_to = "value", 
+    values_drop_na = TRUE) %>%
+    separate(col=variable, into=c("model","scenario","date", "climate"), sep="_", fill="right") %>%
+    pivot_wider(names_from = climate, values_from = value) %>%
+    mutate(tasmax = ((tasmax-273.15)*9/5+32)) %>%
+    rename(t=tasmax, h=rhsmin, s=ws, d=wd) %>%
+    mutate(yymmdd = str_sub(date, 3, -1)) %>%
+    dplyr::select(-date)
+}
+```
+
+    
+## Filter for Temp
+```{r}
+temp <- function(x){
+  x %>% 
+    group_by(RRK_Rgn, huc12) %>%
+    arrange(desc(t)) %>%
+    top_n(n=100)
+}
+```
+
+```{r}
+rh <- function(x){
+  x %>% 
+    group_by(RRK_Rgn, huc12) %>%
+    arrange(h) %>%
+    top_n(n=100)
+}
+```
+
+```{r}
+ws <- function(x){
+  x %>% 
+    group_by(RRK_Rgn, huc12) %>%
+    arrange(desc(s)) %>%
+    top_n(n=100)
+}
+```
+
+# Apply functions
+## Clean and organize
+```{r}
+df = combineCsv(list)
+```
+
+```{r}
+df
+```
+
+## Distinct HUCS
+
+### SC
+```{r}
+scdf = df %>% 
+  filter(RRK_Rgn == "South Coast Region")  
+```
+
+```{r}
+glimpse(scHuc)
+glimpse(scdf)
+```
+```{r}
+setdiff( scHuc$huc12, scdf$huc12)
+```
+This HUC is split across two islands off of long beach, and the centroid is place in water with out weather data coverage.
+```{r}
+ccdf = df %>% 
+  filter(RRK_Rgn == "Central Coast Region") 
+```
+
+```{r}
+setdiff( ccHuc$huc12, ccdf$huc12)
+```
+
+This HUC covers Monterrey bay, and the centroid is place in the bay with out weather data coverage.
+
+# Split by RRK
+
+## SC
+```{r}
+( scTemp = df %>% filter(RRK_Rgn == "South Coast Region") %>% temp() )
+```
+
+```{r}
+( scRh = df %>% filter(RRK_Rgn == "South Coast Region") %>% rh() )
+```
+
+```{r}
+( scWs = df %>% filter(RRK_Rgn == "South Coast Region") %>% ws() )
+```
+
+```{r}
+sc = bind_rows(scTemp, scRh, scWs)
+```
+
+```{r}
+test = sc %>% filter(huc12 == 180600130104	)
+```
+
+```{r}
+unique(test$yymmdd)
+n_distinct(test$yymmdd)
+```
+
+```{r}
+sc %>% 
+  group_by(huc12) %>%
+ summarize(distinct_points =n_distinct(test$yymmdd))
+```
+
+## CC
+```{r}
+( ccTemp = df %>% filter(RRK_Rgn == "Central Coast Region") %>% temp() )
+```
+
+```{r}
+( ccRh = df %>% filter(RRK_Rgn == "Central Coast Region") %>% rh() )
+```
+
+```{r}
+( ccWs = df %>% filter(RRK_Rgn == "Central Coast Region") %>% ws() )
+```
+
+```{r}
+cc = bind_rows(ccTemp, ccRh, ccWs)
+```
+
+```{r}
+cctest = cc %>% filter(huc12 == 180500050400	)
+```
+
+```{r}
+unique(cctest$yymmdd)
+n_distinct(cctest$yymmdd)
+```
+
+```{r}
+cc %>% 
+  group_by(huc12) %>%
+ summarize(distinct_points =n_distinct(cctest$yymmdd))
+```
+
+
+# Join to Polygons
+
+## SC
+```{r}
+( 
+  scTempWide = scTemp %>% 
+  pivot_wider(names_from = yymmdd,
+    values_from = c(t,h, s, d),
+    names_sep = "",
+    names_vary = "slowest") %>%
+    ungroup() 
+)
+```
+
+
+```{r}
+scShp = scHuc %>% dplyr::select(huc12) %>% left_join(scTempWide,  by='huc12')
+```
+```{r}
+glimpse(scShp)
+```
+```{r}
+n_distinct(scShp$huc12)
+```
+
+
+## CC
+```{r}
+( 
+  ccTempWide = ccTemp %>% 
+  pivot_wider(names_from = yymmdd,
+    values_from = c(t,h, s, d),
+    names_sep = "",
+    names_vary = "slowest") %>%
+    ungroup() 
+)
+```
+
+
+
+
+```{r}
+ccShp = ccHuc %>% dplyr::select(huc12) %>% left_join(ccTempWide,  by='huc12')
+```
+
+```{r}
+glimpse(ccShp)
+```
+```{r}
+n_distinct(scShp$huc12)
+```
+
+
+
+#THIS WORKS!
+## SC
+```{r}
+
+uni <- unique(scShp[,c("huc12")])
+
+for (j in 1:nrow(uni)) {
+  i <- uni[j,]
+  tmp <- scShp %>% filter(huc12 == i$huc12)
+  st_write(tmp, dsn = paste("../outputs/singleHucShp/sc/", i$huc12, '.shp'), driver="ESRI Shapefile", overwrite_layer=TRUE)
+}
+  
+```
+
+
+## CC
+```{r}
+
+uni <- unique(ccShp[,c("huc12")])
+
+for (j in 1:nrow(uni)) {
+  i <- uni[j,]
+  tmp <- ccShp %>% filter(huc12 == i$huc12)
+  st_write(tmp, dsn = paste("../outputs/singleHucShp/cc/", i$huc12, '.shp'), driver="ESRI Shapefile", overwrite_layer=TRUE)
+}
+  
+```
+
+## For GEoJson
+### Sc
+```{r}
+
+uni <- unique(scShp[,c("huc12")])
+
+for (j in 1:nrow(uni)) {
+  i <- uni[j,]
+  tmp <- scShp %>% filter(huc12 == i$huc12)
+  st_write(tmp, dsn = paste("../outputs/jsonHuc/sc/", i$huc12, '.geojson'), driver="GeoJSON", overwrite_layer=TRUE)
+}
+  
+```
+
+### Cc
+```{r}
+
+uni <- unique(ccShp[,c("huc12")])
+
+for (j in 1:nrow(uni)) {
+  i <- uni[j,]
+  tmp <- ccShp %>% filter(huc12 == i$huc12)
+  st_write(tmp, dsn = paste("../outputs/jsonHuc/cc/", i$huc12, '.geojson'), driver="GeoJSON", overwrite_layer=TRUE)
+}
+  
+```
+
+
+
+
+
+
+# DOES NOT WORK
+splitByAttributes = function(spdata, codename, dsn=getwd()){
+CODES <- unique(spdata[[codename]])
+for (i in 1:length(CODES)) {
+  tmp <- spdata[spdata[[codename]] == CODES[i], ]
+  writeOGR(tmp, dsn=dsn, CODES[i], driver="ESRI Shapefile",
+           overwrite_layer=TRUE)
+  }
+}
+
+file = paste("./output/", cn ,"data.txt", sep = "")
+```{r}
+splitByAttributes = function(spdata, huc12){
+CODES <- unique(spdata[[huc12]])
+for (i in 1:length(CODES)) {
+  tmp <- spdata[spdata[[huc12]] == CODES[i], ]
+  st_write(tmp, file=paste("../outputs/singleHucShp/", CODES[i], ".shp"), driver="ESRI Shapefile", overwrite_layer=TRUE)
+  }
+}
+```
+
+
+```{r}
+splitByAttributes(scShp, scShp$huc12)
+
+```
+
+```{r}
+unique <- unique(scShp$huc12)
+
+#create new polygons based on the determined column
+for (i in 1:length(unique)) {
+  tmp <- scShp[scShp$huc12 == unique[i], ]
+  st_write(tmp, dsn = "../outputs/singleHucShp/", unique[i], driver="ESRI Shapefile", overwrite_layer=TRUE)
+  
+}
+```
+
+
+
+for (j in 1:nrow(uni)) {
+  i <- uni[j,]
+  tmp <- x %>% filter(Model == i$Model, Garage == i$Garage, City == i$City)
+
+  write.table(tmp, paste(i$Model, "_", i$City, "_", i$Garage, ".csv"))
+}
+
+
+```{r}
+test  = scShp %>% st_cast("POLYGON") %>% filter(huc12==180300031404) 
+```
+
+**THE END**
