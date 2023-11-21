@@ -122,6 +122,50 @@ df2 = temp(df1)
 
 
 # WORKING HERE!!! Weather - fuel to json
+
+```{r}
+b = df2 %>% 
+  ungroup()%>%
+    filter(huc12==180701060203) %>% 
+  mutate(foliar.moisture=82.2) %>%
+  dplyr::select(-RRK_Rgn, -model, -scenario) %>%
+    rename('relative-humidity'=relative.humidity, 'wind-from-direction'=wind.from.direction, 'wind-speed-20ft'=wind.speed.20ft, 'foliar-moisture'=foliar.moisture) %>%
+    arrange(date) %>%
+    ungroup() %>%
+  dplyr::select(-huc12, -date) %>%
+  jsonlite::toJSON(pretty = TRUE, auto_unbox = TRUE)
+```
+
+  
+https://stackoverflow.com/questions/736590/add-new-attribute-element-to-json-object-using-javascript
+```{js}
+var jsonObj = 
+    "fuel-moisture" : {
+      "dead" : {
+        "1hr" : 0.02,
+        "10hr" : 0.02,
+        "100hr" : 0.02
+      },
+      "live" : {
+        "herbaceous" : 0.34,
+        "woody" : 0.67
+      }
+    }
+   
+```
+```{r}
+v <- fromJSON("../scripts/fuelJsonObj.json")
+v
+```
+```{r}
+toJSON(append(fromJSON(b), list(ADD=v)), pretty=TRUE)
+
+```
+```{r}
+res <- lapply(json_lst, \(b, c) toJSON(append(fromJSON(b), list(ADD=v)), pretty=TRUE), v)
+
+```
+
 ```{r}
 ( 
   a = df2 %>% 
@@ -142,6 +186,8 @@ df2 = temp(df1)
     group_by(date) %>%
     nest(data=c('1hr', '10hr', '100hr')) %>%
     rename(dead=data) %>%
+    #nest_legacy(.key = "dead") %>%
+    mutate(dead = purrr::map(dead, as.list)) %>%
     dplyr::select(-x) %>%
     pivot_longer(cols = starts_with("live"),
     names_to = "variable",
@@ -150,28 +196,39 @@ df2 = temp(df1)
     pivot_wider(names_from = y, values_from = value) %>%
     nest(data=c(herbaceous, woody)) %>%
     rename(live=data) %>%
+    #nest_legacy(.key = "live") %>%
+    mutate(live = purrr::map(live, as.list)) %>%
     dplyr::select(-x) %>%
     nest(data=c(dead, live)) %>%
     rename(fuel.moisture=data) %>%
-    nest(data=c(temperature, relative.humidity, wind.from.direction, wind.speed.20ft, foliar.moisture, fuel.moisture)) %>%
-  jsonlite::toJSON(auto_unbox = TRUE, pretty = TRUE) 
-    
-  
-  )
+    #nest_legacy(.key = "fuel.moisture") %>%
+    #mutate(fuel.moisture = purrr::map(fuel.moisture, as.list)) %>%
+    #mutate(fuel.moisture = fuel.moisture %>% map(~ {.x %>% as.list() %>% map(as.list) })) %>%
+    rename('relative-humidity'=relative.humidity, 'wind-from-direction'=wind.from.direction, 'wind-speed-20ft'=wind.speed.20ft, 'foliar-moisture'=foliar.moisture, 'fuel-moisture'=fuel.moisture) %>%
+    arrange(date) %>%
+    ungroup() %>%
+  dplyr::select(-huc12, -date) %>%
+  jsonlite::toJSON(pretty = TRUE, auto_unbox = TRUE)
+)
+```
+
+```{r}
+L <- apply(a, 1, function(x) list(traits = as.list(x)))
+
+L %>%
+  jsonlite::toJSON(pretty = TRUE, auto_unbox = TRUE)
+
   
 ```
 
-  
-```{r eval=FALSE, include=FALSE}
-a %>%
-  jsonlite::toJSON(auto_unbox = TRUE, pretty = TRUE) 
-```
+
+
 
 ```{r}
 write(a, "../outputs/jsonHuc/180701060203.json")
 ```
 
-
+jsonlite::write_json()
 
 #THESE LOOPS WORK BUT NEED TO BE ADAPTED FOR FORMATING THE JSON
 ## SC
