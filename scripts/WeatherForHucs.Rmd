@@ -11,6 +11,29 @@ output: html_document
 
 Filter weather data extracted from EE. Join weather data to Hucs. Convert from .shp to .json.
 
+Select daily weather based on 200 highest temperature days.
+
+SC test huc huc12==180701060203
+
+Name variables
+temperature
+relative-humidity
+wind-speed-20ft
+wind-from-direction
+foliar-moisture
+fuel-moisture
+dead
+1hr
+10hr
+100hr
+live
+herbaceous
+woody
+
+```{r eval=FALSE, include=FALSE}
+setdiff( scHuc$huc12, df$huc12)
+```
+
 # Global options
 prevent scientific notation; use =0 to reset
 ```{r}
@@ -21,81 +44,44 @@ options(scipen=999)
 ```{r}
 library('tidyverse')
 library('sf')
+library('jsonlite')
 ```
 
 # Data
 
+
+## HUCs
 ## HUC Shapefiles
 TxHucScCc.shp
 ```{r}
 hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
 ```
 
+
 ```{r}
-hucsScCc = st_read("../data/TxHucs/TxHucScCc.shp", "TxHucScCc")
-```
-```{r}
-scHuc = hucsScCc %>% filter(RRK_Rgn == "South Coast Region")
-ccHuc = hucsScCc %>% filter(RRK_Rgn == "Central Coast Region")
+scHuc = hucs %>% filter(RRK_Rgn == "South Coast Region")
+ccHuc = hucs %>% filter(RRK_Rgn == "Central Coast Region")
 ```
 
 ## CSV weather data
-
+output from GEE
 ```{r}
-list <- list.files(path="../data/weather", pattern='csv$', full.names = TRUE)
+list <- list.files(path="../data/weather/timestep1524/sc", pattern='csv$', full.names = TRUE)
 ```
-
+```{r}
+list
+```
 # Function to combine CSV
 ## Combine, Clean, and organize
 ```{r}
 combineCsv <- function(list){
   purrr::map(list, read.csv) %>%
   bind_rows() %>%
-    dplyr::select(-system.index, -.geo) %>%
-    pivot_longer(cols = starts_with("GF"),
-    names_to = "variable",
-    values_to = "value", 
-    values_drop_na = TRUE) %>%
-    separate(col=variable, into=c("model","scenario","date", "climate"), sep="_", fill="right") %>%
-    pivot_wider(names_from = climate, values_from = value) %>%
-    mutate(tasmax = ((tasmax-273.15)*9/5+32)) %>%
-    rename(t=tasmax, h=rhsmin, s=ws, d=wd) %>%
-    mutate(yymmdd = str_sub(date, 3, -1)) %>%
-    dplyr::select(-date)
+    dplyr::select(-system.index, -.geo) 
 }
 ```
 
-    
-## Filter for Temp
-```{r}
-temp <- function(x){
-  x %>% 
-    group_by(RRK_Rgn, huc12) %>%
-    arrange(desc(t)) %>%
-    top_n(n=100)
-}
-```
-
-```{r}
-rh <- function(x){
-  x %>% 
-    group_by(RRK_Rgn, huc12) %>%
-    arrange(h) %>%
-    top_n(n=100)
-}
-```
-
-```{r}
-ws <- function(x){
-  x %>% 
-    group_by(RRK_Rgn, huc12) %>%
-    arrange(desc(s)) %>%
-    top_n(n=100)
-}
-```
-
-# Apply functions
-## Clean and organize
+## Apply cobine function
 ```{r}
 df = combineCsv(list)
 ```
@@ -104,155 +90,90 @@ df = combineCsv(list)
 df
 ```
 
-## Distinct HUCS
-
-### SC
 ```{r}
-scdf = df %>% 
-  filter(RRK_Rgn == "South Coast Region")  
+df1 = df%>%
+    pivot_longer(cols = starts_with("GF"),
+    names_to = "variable",
+    values_to = "value", 
+    values_drop_na = TRUE) %>%
+    separate(col=variable, into=c("model","scenario","date", "climate"), sep="_", fill="right")  %>%
+    pivot_wider(names_from = climate, values_from = value) %>%
+    mutate(tasmax = ((tasmax-273.15)*9/5+32)) %>%
+    rename(temperature=tasmax, relative.humidity=rhsmin, wind.speed.20ft=ws, wind.from.direction=wd) 
 ```
 
 ```{r}
-glimpse(scHuc)
-glimpse(scdf)
+df1
 ```
+## Filter for Temp
 ```{r}
-setdiff( scHuc$huc12, scdf$huc12)
+temp <- function(x){
+  x %>% 
+    group_by(RRK_Rgn, huc12) %>%
+    arrange(desc(temperature)) %>%
+    top_n(n=200)
+}
 ```
-This HUC is split across two islands off of long beach, and the centroid is place in water with out weather data coverage.
+
+## Apply temp function
 ```{r}
-ccdf = df %>% 
-  filter(RRK_Rgn == "Central Coast Region") 
-```
-
-```{r}
-setdiff( ccHuc$huc12, ccdf$huc12)
-```
-
-This HUC covers Monterrey bay, and the centroid is place in the bay with out weather data coverage.
-
-# Split by RRK
-
-## SC
-```{r}
-( scTemp = df %>% filter(RRK_Rgn == "South Coast Region") %>% temp() )
-```
-
-```{r}
-( scRh = df %>% filter(RRK_Rgn == "South Coast Region") %>% rh() )
-```
-
-```{r}
-( scWs = df %>% filter(RRK_Rgn == "South Coast Region") %>% ws() )
-```
-
-```{r}
-sc = bind_rows(scTemp, scRh, scWs)
-```
-
-```{r}
-test = sc %>% filter(huc12 == 180600130104	)
-```
-
-```{r}
-unique(test$yymmdd)
-n_distinct(test$yymmdd)
-```
-
-```{r}
-sc %>% 
-  group_by(huc12) %>%
- summarize(distinct_points =n_distinct(test$yymmdd))
-```
-
-## CC
-```{r}
-( ccTemp = df %>% filter(RRK_Rgn == "Central Coast Region") %>% temp() )
-```
-
-```{r}
-( ccRh = df %>% filter(RRK_Rgn == "Central Coast Region") %>% rh() )
-```
-
-```{r}
-( ccWs = df %>% filter(RRK_Rgn == "Central Coast Region") %>% ws() )
-```
-
-```{r}
-cc = bind_rows(ccTemp, ccRh, ccWs)
-```
-
-```{r}
-cctest = cc %>% filter(huc12 == 180500050400	)
-```
-
-```{r}
-unique(cctest$yymmdd)
-n_distinct(cctest$yymmdd)
-```
-
-```{r}
-cc %>% 
-  group_by(huc12) %>%
- summarize(distinct_points =n_distinct(cctest$yymmdd))
+df2 = temp(df1)
 ```
 
 
-# Join to Polygons
-
-## SC
+# WORKING HERE!!! Weather - fuel to json
 ```{r}
 ( 
-  scTempWide = scTemp %>% 
-  pivot_wider(names_from = yymmdd,
-    values_from = c(t,h, s, d),
-    names_sep = "",
-    names_vary = "slowest") %>%
-    ungroup() 
-)
+  a = df2 %>% 
+  ungroup()%>%
+    filter(huc12==180701060203) %>% 
+  mutate(foliar.moisture=82.2) %>%
+    mutate(dead.1hr=0.02) %>%
+  mutate(dead.10hr = 0.02) %>%
+  mutate(dead.100hr=0.02) %>%
+  mutate(live.herbaceous = 0.34) %>%
+  mutate(live.woody = 0.67) %>%
+  dplyr::select(-RRK_Rgn, -model, -scenario) %>%
+    pivot_longer(cols = starts_with("dead"),
+    names_to = "variable",
+    values_to = "value") %>% 
+    separate(col=variable, into=c("x","y"), sep="\\.") %>%
+    pivot_wider(names_from = y, values_from = value) %>%
+    group_by(date) %>%
+    nest(data=c('1hr', '10hr', '100hr')) %>%
+    rename(dead=data) %>%
+    dplyr::select(-x) %>%
+    pivot_longer(cols = starts_with("live"),
+    names_to = "variable",
+    values_to = "value") %>% 
+    separate(col=variable, into=c("x","y"), sep="\\.") %>%
+    pivot_wider(names_from = y, values_from = value) %>%
+    nest(data=c(herbaceous, woody)) %>%
+    rename(live=data) %>%
+    dplyr::select(-x) %>%
+    nest(data=c(dead, live)) %>%
+    rename(fuel.moisture=data) %>%
+    nest(data=c(temperature, relative.humidity, wind.from.direction, wind.speed.20ft, foliar.moisture, fuel.moisture)) %>%
+  jsonlite::toJSON(auto_unbox = TRUE, pretty = TRUE) 
+    
+  
+  )
+  
 ```
 
+  
+```{r eval=FALSE, include=FALSE}
+a %>%
+  jsonlite::toJSON(auto_unbox = TRUE, pretty = TRUE) 
+```
 
 ```{r}
-scShp = scHuc %>% dplyr::select(huc12) %>% left_join(scTempWide,  by='huc12')
-```
-```{r}
-glimpse(scShp)
-```
-```{r}
-n_distinct(scShp$huc12)
-```
-
-
-## CC
-```{r}
-( 
-  ccTempWide = ccTemp %>% 
-  pivot_wider(names_from = yymmdd,
-    values_from = c(t,h, s, d),
-    names_sep = "",
-    names_vary = "slowest") %>%
-    ungroup() 
-)
+write(a, "../outputs/jsonHuc/180701060203.json")
 ```
 
 
 
-
-```{r}
-ccShp = ccHuc %>% dplyr::select(huc12) %>% left_join(ccTempWide,  by='huc12')
-```
-
-```{r}
-glimpse(ccShp)
-```
-```{r}
-n_distinct(scShp$huc12)
-```
-
-
-
-#THIS WORKS!
+#THESE LOOPS WORK BUT NEED TO BE ADAPTED FOR FORMATING THE JSON
 ## SC
 ```{r}
 
