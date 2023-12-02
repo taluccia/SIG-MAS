@@ -1,0 +1,107 @@
+---
+title: "Check Summary TX HUC Runs"
+author: "Anna Talucci"
+date: "11/6/2023"
+output: html_document
+---
+
+# Overview
+Summary product for MAS: acres treated per year by region by veg type. Forest/woodland/shrub/grass
+
+One table, columns = region, priority, treatment intensity (500k, 1m, 2.3 mil), and Years (1-5, 6-10, 11-15, 16-20; equivalent to percentile group)
+
+
+# Global options
+prevent scientific notation; use =0 to reset
+```{r}
+options(scipen=999)
+```
+
+# Library
+```{r}
+library(tidyverse)
+library(sf)
+library(vroom)
+library(tidyr)
+```
+
+# Data
+```{r}
+snRun5 = read_csv("../data/RunIDVeg/Class4_RunID5_SN_WUI_500k_20230623.csv")
+snRun5
+```
+```{r}
+df = read_csv("../outputs/SummarizeMasFcatHUCRuns.csv")
+```
+
+```{r}
+df
+```
+
+
+```{r}
+df %>% filter(TxIntense=="500k") %>% filter(Priority=="WUI") %>% filter(RRK=="SN") %>% group_by(tx_type, VegClass)
+```
+
+# SN Run1
+```{r}
+run1 = st_read("../data/MAS_FCATtreatments/RunID1_TreatmentsSHP_SN_WUI_500k_20230623.shp", "RunID1_TreatmentsSHP_SN_WUI_500k_20230623")
+```
+
+```{r}
+run1
+```
+
+```{r}
+unique(run1$tx_type)
+```
+
+
+RunID10_TreatmentsSHP_NC_WUI_500k_20230623.shp
+# NC Run1
+```{r}
+run10 = st_read("../data/MAS_FCATtreatments/RunID10_TreatmentsSHP_NC_WUI_500k_20230623.shp", "RunID10_TreatmentsSHP_NC_WUI_500k_20230623")
+```
+
+```{r}
+run10
+```
+
+```{r}
+unique(run10$tx_type)
+```
+
+
+
+# sc Run1
+```{r}
+run19 = st_read("../data/MAS_FCATtreatments/RunID19_TreatmentsSHP_SC_WUI_500k_20230925.shp", "RunID19_TreatmentsSHP_SC_WUI_500k_20230925")
+```
+
+```{r}
+run19
+```
+
+```{r}
+unique(run19$tx_type)
+```
+
+
+
+# cc Run1
+```{r}
+run28 = st_read("../data/MAS_FCATtreatments/RunID28_TreatmentsSHP_CC_WUI_500k_20230925.shp", "RunID28_TreatmentsSHP_CC_WUI_500k_20230925")
+```
+
+```{r}
+run28
+```
+
+```{r}
+unique(run28$tx_type)
+```
+
+
+```{r}
+run28 = st_read("../data/MAS_FCATtreatments/RunID28_TreatmentsSHP_CC_WUI_500k_20230925.shp", "RunID28_TreatmentsSHP_CC_WUI_500k_20230925")
+```
