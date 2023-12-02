@@ -1,0 +1,63 @@
+---
+title: "WeatherComparelists"
+author: "Anna Talucci"
+date: "11/28/2023"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(vetr)
+```
+
+
+
+```{r}
+t24 = read.table(text = list.files(path="../outputs/jsonHuc/ts2024/sc",pattern='json$',
+                             include.dirs= FALSE,
+                             full.names=TRUE),
+           sep = "/")
+```
+
+```{r}
+t29 = read.table(text = list.files(path="../outputs/jsonHuc/ts2029/sc",pattern='json$',
+                             include.dirs= FALSE,
+                             full.names=TRUE),
+           sep = "/")
+```
+
+```{r}
+t24 
+```
+
+```{r}
+t29
+```
+
+
+```{r}
+t24A = t24 %>% separate_wider_delim(V6, "_", names = c("A", "B")) %>% dplyr::select(A) 
+```
+
+```{r}
+( t29A = t29 %>% separate_wider_delim(V6, "_", names = c("A", "B")) %>% dplyr::select(A) )
+```
+
+
+```{r}
+vetr::alike(t24A, t29A)
+```
+```{r}
+huclist24 <- list.files(path="../outputs/j01m03_3/",pattern='tif$', full.names = TRUE)
+```
+
+```{r}
+tiflist
+```
+
+```{r}
+huclist29 <- list.files(path="../outputs/WSA/Batch5",pattern='tif$', full.names = TRUE)
+```
+```{r}
+setdiff(tools::file_path_sans_ext(basename(hdflist)), tools::file_path_sans_ext(basename(tiflist)))
+```
