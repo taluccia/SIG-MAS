@@ -10,7 +10,7 @@ Summary product for MAS: acres treated per year by region by veg type. Forest/wo
 
 One table, columns = region, priority, treatment intensity (500k, 1m, 2.3 mil), and Years (1-5, 6-10, 11-15, 16-20; equivalent to percentile group)
 
-
+outputs from EE code...
 
 # Library
 ```{r}
@@ -44,44 +44,43 @@ listRuns
 ```
 # Functions
 ```{r}
-geousa <- function(list){
+part1 <- function(list){
   purrr::map(list, read.csv) %>%
     map2(names(.), ~mutate(.x, Tx = .y)) %>%
   bind_rows() %>%
     separate(., Tx, into = c("VegClass", "RunId", "RRK", "Priority", "TxIntense", "dateProc"), sep = '_', convert=TRUE, extra='merge') %>%
-    group_by(tx_type, VegClass, RRK, Priority, TxIntense) %>%
-     summarize(TxSqM = sum(sum)) %>%
     mutate(vegType = ifelse(VegClass == "Class1", "Herb",
                                      ifelse(VegClass == "Class2", "Shrub",
                                             ifelse(VegClass == "Class3", "Hardwood",
-                                                   ifelse(VegClass == "Class4", "Softwood", "F"))))) %>%
-    mutate(TxAcres = TxSqM/4047) %>%
-    dplyr::select(RRK, Priority, TxIntense, tx_type, VegClass, vegType, TxSqM, TxAcres)
-}
+                                                   ifelse(VegClass == "Class4", "Softwood", "F")))))  %>%
 
+    group_by(RRK, Priority, TxIntense,VegClass, vegType, tx_code, tx_type) %>%
+     summarize(TxSqM = sum(sum)) %>%
+        mutate(TxAcres = TxSqM/4047) %>%
+    dplyr::select(RRK, Priority, TxIntense, tx_type, tx_code, VegClass, vegType, TxSqM, TxAcres)
+}
 ```
 
 ```{r}
-combine <- function(list){
-  purrr::map(list, read.csv) %>%
-    map2(names(.), ~mutate(.x, Tx = .y)) %>%
-  bind_rows() %>%
-    separate(., Tx, into = c("VegClass", "RunId", "RRK", "Priority", "TxIntense", "dateProc"), sep = '_', convert=TRUE, extra='merge')
-}
+( run_part1 = part1(listRuns) )
 ```
-    mutate(totTxSqkm = ifelse(VT == "Herb", 10203,
-                                     ifelse(VT == "Shrub", 26841,
-                                            ifelse(VT == "Hardwood", 11996,
-                                                   ifelse(VT == "Softwood", 44567, "F"))))) %>%
-    mutate(totTxSqkm = as.numeric(totTxSqkm)) %>%
-    mutate(totTxSqM = totTxSqkm*1000000) %>%
-    mutate(prctTx = (TxSqM/totTxSqM)*100)
-    
-    
-For Herb (1), Shrub (2), Hardwood (3), softwood (4)
 
 ```{r}
-( run = geousa(listRuns) )
+( wuicheck =run_part1 %>% filter(Priority=="WUI") %>% filter(TxIntense=="500k") )
+```
+
+```{r}
+unique(wuicheck$tx_type)
+```
+```{r}
+( biggroupsum = run_part1 %>% 
+    group_by(Priority, TxIntense, tx_type) %>%
+     summarize(TotAcres = sum(TxAcres)) )
+```
+
+
+```{r}
+unique(run_part1$tx_type)
 ```
 
 ```{r}
@@ -94,5 +93,9 @@ For Herb (1), Shrub (2), Hardwood (3), softwood (4)
 
 # Write Summary Table
 ```{r}
-write.csv(run, "../outputs/SummarizeMasFcatRuns.csv", row.names = F)
+write.csv(run_part1, "../outputs/SummarizeMasFcatRuns11-06-2023.csv", row.names = F)
+```
+
+```{r}
+write.csv(biggroupsum, "../outputs/SummarizeMasFcatRunsBigGroups.csv", row.names = F)
 ```
