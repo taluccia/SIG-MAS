@@ -17,6 +17,10 @@ library(terra)
 ```{r}
 hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
 ```
+
+```{r}
+hucs
+```
 ## RRK
 ```{r}
 rrk = st_read("../data/RRK/RRK_boundaries3.shp", "RRK_boundaries3")
