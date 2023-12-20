@@ -1,0 +1,336 @@
+---
+title: "Summarize Fvs"
+author: "Anna Talucci"
+date: "12/19/2023"
+output: html_document
+---
+
+---
+title: "Summary FVS Processed Outputs"
+author: "Anna Talucci"
+date: "12/2/2023"
+output: html_document
+---
+
+
+
+# Overview
+Summary table for FVS Processed outputs by RRK
+
+# Global options
+prevent scientific notation; use =0 to reset
+```{r}
+options(scipen=999)
+```
+
+# Library
+```{r}
+library(tidyverse)
+
+library(vroom)
+
+```
+
+
+# Data
+
+```{r}
+fvs = read_csv("../data/FVS/FVSprocessedOutputsHucs.csv")
+```
+
+```{r}
+fvs
+```
+
+# Investigate SC Zero Issue
+```{r}
+(scZero = fvs %>% filter(RRK=="SC") %>% filter(TSC==0) )
+
+cat(paste0(sprintf('%s', unique(scZero$HUC12)), collapse = ", "))
+
+```
+# Basic Summary Stats
+```{r}
+fvs
+```
+
+```{r}
+TSCSummary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, Year) %>%
+  summarise_at("TSC", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsTscSummary432.csv", row.names = F)
+```
+
+ %>%
+  write.csv(., "../outputs/fvs/FvsTscSummary.csv", row.names = F)
+```{r}
+SDISummary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, Year) %>%
+  summarise_at("SDI", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsSdiSummary432.csv", row.names = F)
+```
+
+```{r}
+QMDSummary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, Year) %>%
+  summarise_at("QMD", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsQmdSummary432.csv", row.names = F)
+```
+
+```{r}
+Flt3Summary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, Year) %>%
+  summarise_at("Fuel_lt3", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsFlt3Summary432.csv", row.names = F)
+```
+
+```{r}
+F3t6Summary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, Year) %>%
+  summarise_at("Fuel_3to6", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsF3t6Summary432.csv", row.names = F)
+```
+
+```{r}
+F6t12Summary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, Year) %>%
+  summarise_at("Fuel_6to12", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsF6t12Summary432.csv", row.names = F)
+```
+
+# Summary by Run & Treatment 108
+```{r}
+TSCSummary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, run) %>%
+  summarise_at("TSC", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsTscSummary108.csv", row.names = F)
+```
+
+ %>%
+  write.csv(., "../outputs/fvs/FvsTscSummary.csv", row.names = F)
+```{r}
+SDISummary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, run) %>%
+  summarise_at("SDI", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsSdiSummary108.csv", row.names = F)
+```
+
+```{r}
+QMDSummary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, run) %>%
+  summarise_at("QMD", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsQmdSummary108.csv", row.names = F)
+```
+
+```{r}
+Flt3Summary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, run) %>%
+  summarise_at("Fuel_lt3", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsFlt3Summary108.csv", row.names = F)
+```
+
+```{r}
+F3t6Summary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, run) %>%
+  summarise_at("Fuel_3to6", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsF3t6Summary108.csv", row.names = F)
+```
+
+```{r}
+F6t12Summary = fvs %>% 
+  group_by(RRK, Priority, TxIntensity, TxType, run) %>%
+  summarise_at("Fuel_6to12", .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/FvsF6t12Summary108.csv", row.names = F)
+```
+
+# Calculate Difference from Baseline
+
+```{r}
+fvs
+```
+
+## TSC
+```{r}
+TscChange = fvs %>% 
+  dplyr::select(HUC12,run, RRK, Priority, TxIntensity, TxType, Year, TSC) %>%
+  pivot_wider(names_from = Year, values_from = TSC, names_glue = "yr_{Year}") %>%
+  mutate(baseline = yr_2024,
+         diff2029 = yr_2029-yr_2024,
+         diff2034 = yr_2034-yr_2024,
+         diff2044 = yr_2044-yr_2024,
+         prct2029 = (diff2029/baseline)*100,
+         prct2034 = (diff2034/baseline)*100,
+         prct2044 = (diff2044/baseline)*100)
+```
+
+## SDI
+```{r}
+SdiChange = fvs %>% 
+  dplyr::select(HUC12,run, RRK, Priority, TxIntensity, TxType, Year, SDI_x_100) %>%
+  pivot_wider(names_from = Year, values_from = SDI_x_100, names_glue = "yr_{Year}") %>%
+  mutate(baseline = yr_2024,
+         diff2029 = yr_2029-yr_2024,
+         diff2034 = yr_2034-yr_2024,
+         diff2044 = yr_2044-yr_2024,
+         prct2029 = (diff2029/baseline)*100,
+         prct2034 = (diff2034/baseline)*100,
+         prct2044 = (diff2044/baseline)*100)
+```
+
+((yr_2029-yr_2024)/yr_2024*100))
+## QMD
+```{r}
+QmdChange = fvs %>% 
+  dplyr::select(HUC12,run, RRK, Priority, TxIntensity, TxType, Year, QMD_x_100) %>%
+  pivot_wider(names_from = Year, values_from = QMD_x_100, names_glue = "yr_{Year}") %>%
+  mutate(baseline = yr_2024,
+         diff2029 = yr_2029-yr_2024,
+         diff2034 = yr_2034-yr_2024,
+         diff2044 = yr_2044-yr_2024,
+         prct2029 = (diff2029/baseline)*100,
+         prct2034 = (diff2034/baseline)*100,
+         prct2044 = (diff2044/baseline)*100)
+```
+
+## Fuellt3
+```{r}
+Flt3Change = fvs %>% 
+  dplyr::select(HUC12,run, RRK, Priority, TxIntensity, TxType, Year, Fuel_lt3_x_100) %>%
+  pivot_wider(names_from = Year, values_from = Fuel_lt3_x_100, names_glue = "yr_{Year}") %>%
+  mutate(baseline = yr_2024,
+         diff2029 = yr_2029-yr_2024,
+         diff2034 = yr_2034-yr_2024,
+         diff2044 = yr_2044-yr_2024,
+         prct2029 = (diff2029/baseline)*100,
+         prct2034 = (diff2034/baseline)*100,
+         prct2044 = (diff2044/baseline)*100)
+```
+
+## Fuel_3to6
+```{r}
+F3to6Change = fvs %>% 
+  dplyr::select(HUC12,run, RRK, Priority, TxIntensity, TxType, Year, Fuel_3to6_x_100) %>%
+  pivot_wider(names_from = Year, values_from = Fuel_3to6_x_100, names_glue = "yr_{Year}") %>%
+  mutate(baseline = yr_2024,
+         diff2029 = yr_2029-yr_2024,
+         diff2034 = yr_2034-yr_2024,
+         diff2044 = yr_2044-yr_2024,
+         prct2029 = (diff2029/baseline)*100,
+         prct2034 = (diff2034/baseline)*100,
+         prct2044 = (diff2044/baseline)*100)
+```
+
+### zero issue
+```{r}
+F3to6Change %>% 
+  filter(RRK=="SC") %>% 
+  filter(yr_2044==0) %>%
+  write.csv(., "../outputs/fvs/SC_Zero_Issue.csv", row.names = F)
+```
+```{r}
+zeroF3to6Change = F3to6Change %>% 
+  filter(RRK=="SC") %>% 
+  filter(yr_2044==0) 
+```
+```{r}
+fvs %>% 
+  filter(RRK=="SC") %>% 
+  select(HUC12, Year, Fuel_3to6_x_100, Fuel_6to12_x_100) %>% 
+  group_by(HUC12) %>% right_join(zeroF3to6Change, by='HUC12')
+```
+
+```{r}
+fvs %>% 
+  filter(RRK=="SC") %>%
+  group_by(HUC12) %>% 
+  filter(Fuel_3to6_x_100==0 | Fuel_6to12_x_100==0) %>% 
+  write.csv(., "../outputs/fvs/SCZeroIssueProcessed.csv", row.names = F)
+```
+```{r}
+zeroF3to6Change = F3to6Change %>% 
+  filter(RRK=="SC") %>% 
+  filter(yr_2044==0) 
+```
+
+```{r}
+( 
+  zeroSc = fvs %>% 
+  filter(RRK=="SC") %>% 
+  select(HUC12, Year, Fuel_3to6_x_100, Fuel_6to12_x_100) %>% 
+  group_by(HUC12) %>% 
+  filter( Fuel_6to12_x_100==0) 
+)
+
+```
+
+```{r}
+unique(zeroSc$HUC12)
+```
+
+## Fuel_6to12
+```{r}
+F6to12Change = fvs %>% 
+  dplyr::select(HUC12,run, RRK, Priority, TxIntensity, TxType, Year, Fuel_6to12_x_100) %>%
+  pivot_wider(names_from = Year, values_from = Fuel_6to12_x_100, names_glue = "yr_{Year}") %>%
+  mutate(baseline = yr_2024,
+         diff2029 = yr_2029-yr_2024,
+         diff2034 = yr_2034-yr_2024,
+         diff2044 = yr_2044-yr_2024,
+         prct2029 = (diff2029/baseline)*100,
+         prct2034 = (diff2034/baseline)*100,
+         prct2044 = (diff2044/baseline)*100)
+```
+
+
+# Summaries for Change
+
+## TSC
+```{r}
+TscPrctChnge = TscChange %>% 
+  group_by(RRK) %>%
+  summarise_at(vars('prct2029', 'prct2034', 'prct2044'), .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/TscPrctChng.csv", row.names = F)
+```
+
+## SDI
+```{r}
+sdiPrctChng = SdiChange %>% 
+  group_by(RRK) %>%
+  summarise_at(vars('prct2029', 'prct2034', 'prct2044'), .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/SdiPrctChng.csv", row.names = F)
+```
+
+## QMD
+```{r}
+QMDPrctChng = QmdChange %>% 
+  group_by(RRK) %>%
+  summarise_at(vars('prct2029', 'prct2034', 'prct2044'), .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/QmdPrctChng.csv", row.names = F)
+```
+
+## Fuellt3
+```{r}
+Flt3PrctChng = Flt3Change %>% 
+  group_by(RRK) %>%
+  summarise_at(vars('prct2029', 'prct2034', 'prct2044'), .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/Flt3PrctChng.csv", row.names = F)
+```
+
+## Fuel 3 to 6
+```{r}
+F3t6PrctChng = F3to6Change %>% 
+  group_by(RRK) %>%
+  summarise_at(vars('prct2029', 'prct2034', 'prct2044'), .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/F3t6PrctChng.csv", row.names = F)
+```
+
+## Fuel 6 to 12
+```{r}
+F6t12PrctChng = F6to12Change %>% 
+  group_by(RRK) %>%
+  summarise_at(vars('prct2029', 'prct2034', 'prct2044'), .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  write.csv(., "../outputs/fvs/F6t12PrctChng.csv", row.names = F)
+```
+
+
+
