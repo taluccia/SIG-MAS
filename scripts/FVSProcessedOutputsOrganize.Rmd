@@ -1,0 +1,125 @@
+---
+title: "Summary FVS Processed Outputs"
+author: "Anna Talucci"
+date: "12/2/2023"
+output: html_document
+---
+
+
+
+# Overview
+Summary table for FVS Processed outputs by RRK
+
+# Global options
+prevent scientific notation; use =0 to reset
+```{r}
+options(scipen=999)
+```
+
+# Library
+```{r}
+library(tidyverse)
+library(sf)
+library(vroom)
+library(tidyr)
+```
+
+
+# Data
+
+## List of csv files
+
+```{r}
+listRuns <- list.files(path="../data/FvsProcessedOutput/",pattern='csv$', full.names = TRUE)
+```
+
+```{r include=FALSE}
+listRuns
+```
+
+
+
+### Name items in a list with file name
+```{r}
+names(listRuns) <- tools::file_path_sans_ext(basename(listRuns))
+```
+
+```{r include=FALSE}
+listRuns
+```
+
+
+# Functions
+
+Organize dataframe with file name information
+```{r}
+part1 <- function(list){
+  purrr::map(list, read.csv) %>%
+    map2(names(.), ~mutate(.x, Tx = .y)) %>%
+  bind_rows() %>%
+    separate(., Tx, into = c("run", "RRK", 'Priority', 'TxIntensity', 'TxType', 'extraName'), sep = '_', convert=TRUE, extra='merge')
+}
+
+```
+
+# Apply function to list
+```{r}
+fvs = part1(listRuns)
+```
+
+
+```{r}
+fvs
+```
+
+```{r}
+unique(fvs$TxType)
+unique(fvs$TxIntensity)
+unique(fvs$Priority)
+unique(fvs$run)
+```
+# Check data
+
+```{r}
+( new_DF <- fvs[rowSums(is.na(fvs)) > 0,] )
+```
+```{r eval=FALSE, include=FALSE}
+fvs %>% 
+  select(Year, run, RRK, Priority, TxIntensity, TxType) %>% 
+  unite("name", run:TxType, sep= "_", remove = FALSE) %>%
+  select(name) %>%
+  distinct() %>%
+  write.csv(., "../outputs/fvs/FvsNames.csv", row.names = F)
+  
+```
+
+```{r}
+fvs
+```
+
+```{r}
+fvsHucs = fvs %>%
+  dplyr::select(HUC12, RRK:TxType, run, Year:Fuel_6to12_x_100) %>%
+  mutate(TSC = TSC_x_100/100,
+         SDI = SDI_x_100/100,
+         QMD = QMD_x_100/100, 
+         Fuel_lt3 = Fuel_lt3_x_100/100, 
+         Fuel_3to6 = Fuel_3to6_x_100/100,
+         Fuel_6to12 = Fuel_6to12_x_100/100) %>%
+  dplyr::select(HUC12:Year, TSC:Fuel_6to12)
+```
+
+```{r}
+glimpse(fvsHucs)
+```
+```{r}
+n_distinct(fvsHucs$HUC12)
+```
+
+```{r}
+3*3*3*4
+```
+# Write Summary Table
+```{r}
+write.csv(fvsHucs, "../outputs/fvs/FVSprocessedOutputsHucs.csv", row.names = F)
+```
