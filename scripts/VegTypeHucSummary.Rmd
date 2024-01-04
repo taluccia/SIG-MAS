@@ -1,0 +1,199 @@
+---
+title: "Veg Type Summary"
+author: "Anna Talucci"
+date: "1/4/2024"
+output: html_document
+---
+
+# Overview
+Vegetation type (softwood, hardwood, herb, shrub) by HUC across 4 RRK. 
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+library(RColorBrewer)
+library(scales)
+library(ggnewscale)
+library(cowplot)
+```
+
+# Data
+```{r}
+veg = read_csv("../data/vegType/AllHucsHerbShrubHardSoft.csv")
+```
+
+```{r}
+head(veg)
+```
+```{r}
+veg1 = veg %>% 
+  dplyr::select(RRK_Region, huc12, hardwoodsumsqkm, herbsumsqkm, shrubsumsqkm, softwoodsumsqkm, vegsumsqkm) %>% 
+  mutate(huc12 = as.character(huc12)) %>%
+  mutate(propHW = round(hardwoodsumsqkm/vegsumsqkm, 2),
+         propSW = round(softwoodsumsqkm/vegsumsqkm, 2),
+         propShrb = round(shrubsumsqkm/vegsumsqkm, 2),
+         propHrb = round(herbsumsqkm/vegsumsqkm,2))
+```
+
+```{r}
+veg1
+```
+
+```{r}
+( veg2 = veg1 %>% 
+  group_by(RRK_Region) %>%
+  summarize(totHW = sum(hardwoodsumsqkm), 
+            totSW = sum(softwoodsumsqkm), 
+            totHrb = sum(herbsumsqkm), 
+            totShrb = sum(shrubsumsqkm), 
+            totVeg = sum(vegsumsqkm)) 
+  )
+
+(veg3 = veg2%>%
+    mutate(propHW = round(totHW/totVeg, 2), 
+           propSW = round(totSW/totVeg, 2), 
+           propShrb = round(totShrb/totVeg, 2), 
+           propHrb = round(totHrb/totVeg, 2))
+)
+```
+```{r}
+write.csv(veg3, "../outputs/RRKPropVegType.csv", row.names = F)
+```
+```{r}
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
+```{r}
+hucs1 = hucs %>% dplyr::select(huc12, RRK_Rgn)
+```
+
+```{r}
+ca = st_read("../data/boundaries/California.shp", "California")
+```
+# Join csv to HUC shapefile
+```{r}
+(vegshp = hucs1 %>% full_join(veg1, by='huc12') )
+```
+
+```{r}
+my_breaks <- c(0, .25, .50, .75, 1.00)
+pal <- c('#ffffcc','#c2e699','#78c679','#238443')
+
+scale_fill_fermenter_custom <- function(pal, na.value = "grey50", guide = "coloursteps", aesthetics = "fill", ...) {
+  binned_scale("fill", "fermenter", ggplot2:::binned_pal(scales::manual_pal(unname(pal))), na.value = na.value, guide = guide, ...)  
+}
+
+
+HW = ggplot(vegshp) +
+    geom_sf(aes(fill = propHW), lwd = 0)+
+   scale_fill_fermenter_custom(pal) +
+  coord_sf()+
+  theme_minimal() + guides(fill=guide_legend(title="Proportion"))
+
+HW
+```
+
+```{r}
+my_breaks <- c(0, .25, .50, .75, 1.00)
+pal <- c('#ffffcc','#c2e699','#78c679','#238443')
+
+scale_fill_fermenter_custom <- function(pal, na.value = "grey50", guide = "coloursteps", aesthetics = "fill", ...) {
+  binned_scale("fill", "fermenter", ggplot2:::binned_pal(scales::manual_pal(unname(pal))), na.value = na.value, guide = guide, ...)  
+}
+
+
+HW1 = ggplot() +
+  geom_sf(data=ca, fill='#A9AB9D', colour='#A9AB9D') +
+  
+  new_scale_fill() +
+    geom_sf(data=vegshp, aes(fill = propHW), lwd = 0)+
+   scale_fill_fermenter_custom(pal) +
+  coord_sf()+
+  theme_minimal() + ggtitle("Proportion Hardwood") +
+  theme(legend.title=element_blank())
+
+HW1
+```
+```{r}
+ggsave("../figures/ProportionHardwood.png", plot=HW1, dpi=600, bg="white")
+```
+```{r}
+my_breaks <- c(0, .25, .50, .75, 1.00)
+pal <- c('#ffffcc','#c2e699','#78c679','#238443')
+
+scale_fill_fermenter_custom <- function(pal, na.value = "grey50", guide = "coloursteps", aesthetics = "fill", ...) {
+  binned_scale("fill", "fermenter", ggplot2:::binned_pal(scales::manual_pal(unname(pal))), na.value = na.value, guide = guide, ...)  
+}
+
+
+SW1 = ggplot() +
+  geom_sf(data=ca, fill='#A9AB9D', colour='#A9AB9D') +
+  
+  new_scale_fill() +
+    geom_sf(data=vegshp, aes(fill = propSW), lwd = 0)+
+   scale_fill_fermenter_custom(pal) +
+  coord_sf()+
+  theme_minimal() + ggtitle("Proportion Softwood") +
+  theme(legend.title=element_blank())
+
+SW1
+```
+
+```{r}
+ggsave("../figures/ProportionSoftwood.png", plot=SW1, dpi=600, bg="white")
+```
+
+```{r}
+my_breaks <- c(0, .25, .50, .75, 1.00)
+pal <- c('#ffffcc','#c2e699','#78c679','#238443')
+
+scale_fill_fermenter_custom <- function(pal, na.value = "grey50", guide = "coloursteps", aesthetics = "fill", ...) {
+  binned_scale("fill", "fermenter", ggplot2:::binned_pal(scales::manual_pal(unname(pal))), na.value = na.value, guide = guide, ...)  
+}
+
+
+shb1 = ggplot() +
+  geom_sf(data=ca, fill='#A9AB9D', colour='#A9AB9D') +
+  
+  new_scale_fill() +
+    geom_sf(data=vegshp, aes(fill = propShrb), lwd = 0)+
+   scale_fill_fermenter_custom(pal) +
+  coord_sf()+
+  theme_minimal() + ggtitle("Proportion Shrub") +
+  theme(legend.title=element_blank())
+
+shb1
+```
+```{r}
+ggsave("../figures/ProportionShrub.png", plot=shb1, dpi=600, bg="white")
+```
+```{r}
+my_breaks <- c(0, .25, .50, .75, 1.00)
+pal <- c('#ffffcc','#c2e699','#78c679','#238443')
+
+scale_fill_fermenter_custom <- function(pal, na.value = "grey50", guide = "coloursteps", aesthetics = "fill", ...) {
+  binned_scale("fill", "fermenter", ggplot2:::binned_pal(scales::manual_pal(unname(pal))), na.value = na.value, guide = guide, ...)  
+}
+
+
+herb1 = ggplot() +
+  geom_sf(data=ca, fill='#A9AB9D', colour='#A9AB9D') +
+  
+  new_scale_fill() +
+    geom_sf(data=vegshp, aes(fill = propHrb), lwd = 0)+
+   scale_fill_fermenter_custom(pal) +
+  coord_sf()+
+  theme_minimal() + ggtitle("Proportion Herb") +
+  theme(legend.title=element_blank())
+
+herb1
+```
+
+```{r}
+ggsave("../figures/ProportionHerb.png", plot=herb1, dpi=600, bg="white")
+```
+# Grid
+
+```{r}
+cowplot::plot_grid(HW1, SW1, shb1, herb1)
+```

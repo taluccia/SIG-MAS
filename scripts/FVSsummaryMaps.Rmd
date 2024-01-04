@@ -1,0 +1,88 @@
+---
+title: "FVSsummaryMaps"
+author: "Anna Talucci"
+date: "12/30/2023"
+output: html_document
+---
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+library(viridis)
+```
+
+
+# Data
+```{r}
+tsc = read_csv("../data/FVS/temporalChange/TSCDiff.csv")
+```
+
+```{r}
+head(tsc)
+```
+```{r}
+tsc = tsc %>% rename(huc12 = HUC12) %>% mutate(huc12 = as.character(huc12))
+```
+
+```{r}
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
+```{r}
+hucs
+```
+# Join csv to HUC shapefile
+```{r}
+(shp = hucs %>% full_join(tsc, by='huc12') )
+```
+
+```{r}
+unique(shp$TxIntensity)
+```
+
+# Map
+
+```{r eval=FALSE, include=FALSE}
+my_breaks <- c(25, 50, 75, 100)
+ggplot(txRffc) +
+    geom_sf(aes(fill = rffcPrct), lwd = 0)+
+    scale_fill_gradientn(colours=rev(magma(4)),
+                         name="RFFC Rank Percent",
+                         na.value = "grey100", 
+                         breaks = my_breaks, labels = my_breaks)
+```
+
+```{r}
+shp1 = shp %>% filter(Priority=="WUI") %>% filter(TxIntensity=="1m") %>%filter(TxType=='trt1')
+
+```
+```{r}
+shp2 = shp %>% 
+  group_by(RRK, huc12) %>%
+  summarise_at(vars('prct2029', 'prct2034', 'prct2044'), .funs = lst(mean, sd), na.rm = TRUE) 
+```
+
+```{r}
+shp2
+```
+
+```{r}
+my_breaks <- c(-5, 0, 10, 20, 30)
+ggplot(shp2) +
+    geom_sf(aes(fill = prct2029_mean), lwd = 0)+
+    scale_fill_gradientn(colours=rev(magma(5)),
+                         name="Percent Change at 5 years",
+                         na.value = "grey100", 
+                         breaks = my_breaks, labels = my_breaks)
+```
+
+
+```{r}
+my_breaks <- c(0, 25, 50, 100, 200)
+ggplot(shp2) +
+    geom_sf(aes(fill = prct2044_mean), lwd = 0)+
+    scale_fill_gradientn(colours=rev(magma(5)),
+                         name="Percent Change at 20 years",
+                         na.value = "grey100", 
+                         breaks = my_breaks, labels = my_breaks)
+```
