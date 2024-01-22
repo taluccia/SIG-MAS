@@ -26,6 +26,37 @@ library(tidyr)
 
 
 # Data
+```{r}
+huc = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
+
+```{r}
+huc %>% st_drop_geometry() %>% group_by(RRK_Rgn) %>% summarise(n=n())
+```
+
+```{r}
+huc
+```
+
+```{r}
+unique(huc$RRK_Rgn)
+```
+```{r}
+( hucIdOrgin = huc %>% 
+  st_drop_geometry() %>% 
+  dplyr::select(huc12, RRK_Rgn) %>% 
+  rename(HUC12=huc12) %>% 
+  mutate(RRK = ifelse(RRK_Rgn == "Sierra Nevada Region", "SN",
+                         ifelse(RRK_Rgn == "North Coast Region" , "NC",
+                                ifelse(RRK_Rgn == "South Coast Region" , "SC", "CC")))) )
+```
+
+```{r}
+( snOrg = hucIdOrgin %>% filter(RRK=="SN") )
+( ncOrg = hucIdOrgin %>% filter(RRK=="NC") )
+( scOrg = hucIdOrgin %>% filter(RRK=="SC") )
+( ccOrg = hucIdOrgin %>% filter(RRK=="CC") )
+```
 
 ## List of csv files
 
@@ -48,7 +79,9 @@ names(listRuns) <- tools::file_path_sans_ext(basename(listRuns))
 listRuns
 ```
 
-
+```{r}
+listRuns[1] %>%read.csv()
+```
 # Functions
 
 Organize dataframe with file name information
@@ -119,7 +152,177 @@ n_distinct(fvsHucs$HUC12)
 ```{r}
 3*3*3*4
 ```
+
+# Fix duplicate issue and extract HUCs in RRK
+```{r}
+435+774+1148+480
+2837*3*3*3*4
+```
+Central Coast Region	435			
+North Coast Region	774			
+Sierra Nevada Region	1148			
+South Coast Region	480	
+
+Known Duplicates These Hucs are duplicated in two RRK Regions
+180600060705 --CC
+180600070204 --cc
+180600070208 --cc
+180600070303 --cc
+180600070601 --cc
+180600070602 --cc
+180600080602 --cc
+180902060105 --sn
+```{r}
+fvsHucs
+```
+
+
+```{r}
+targetCC = c('180600060705', '180600070204', '180600070208', '180600070303', '180600070601', '180600070602', '180600080602')
+```
+```{r}
+targetSN = c('180902060105')
+```
+
+## CC
+```{r}
+435*3*3*3*4
+```
+
+```{r}
+( noDupsCC = fvsHucs %>% 
+    filter(!HUC12 %in% targetCC) %>%
+    filter(RRK=="CC") )
+```
+```{r}
+( dupCC = fvsHucs %>% 
+    filter(HUC12 %in% targetCC) %>%
+    filter(RRK=="CC")
+    )
+```
+
+```{r}
+( cc_clean = bind_rows(noDupsCC, dupCC) )
+```
+```{r}
+cc %>% group_by(RRK) %>% 
+  summarise(n = n_distinct(HUC12))
+```
+
+## SN
+
+```{r}
+1148*3*3*3*4
+```
+```{r}
+( noDupsSN = fvsHucs %>% 
+    filter(!HUC12 %in% targetSN) %>%
+    filter(RRK=="SN") )
+```
+
+```{r}
+( dupSN = fvsHucs %>% 
+    filter(HUC12 %in% targetSN) %>%
+    filter(RRK=="SN")
+    )
+```
+
+```{r}
+( sn = bind_rows(noDupsSN, dupSN) )
+```
+
+### Identify additional 3 hucs to remove
+
+```{r}
+snOrg
+( x = data_frame(aggregate(sn$HUC12, list(num=sn$HUC12), length)) )
+x %>% filter(x!=108)
+(checksnhucs = x %>% rename(HUC12=num) %>% mutate(HUC12=as.character(HUC12)) %>% left_join(snOrg, by='HUC12') )
+( new_DF <- subset(checksnhucs, is.na(checksnhucs$RRK)) )
+```
+```{r}
+removeSN = c('180201210406', '180800030307','180800031600')
+```
+
+```{r}
+( sn_clean = sn %>% filter(!HUC12 %in% removeSN) )
+```
+
+## SC
+### Correct # of rows
+```{r}
+480*3*3*3*4
+```
+```{r}
+( sc = fvsHucs %>% filter(RRK=='SC') )
+```
+
+```{r}
+scOrg
+( xsc = data_frame(aggregate(sc$HUC12, list(num=sc$HUC12), length)) )
+
+(checkschucs = xsc %>% rename(HUC12=num) %>% mutate(HUC12=as.character(HUC12)) %>% left_join(scOrg, by='HUC12') )
+( new_DF <- subset(checkschucs, is.na(checkschucs$RRK)) )
+```
+```{r}
+cat(paste0(sprintf('"%s"', unique(new_DF$HUC12)), collapse = ", "))
+```
+```{r}
+targetSC = c("180300030407", "180300030602", "180300030604", "180300031103", "180300031202", "180300031302", "180300031402", "180300031406", "180600060705", "180600070204", "180600070208", "180600070303", "180600070601", "180600070602", "180600080602", "180600140101", "180701030202", "180701040500", "180701050303", "180701050401", "180701050402", "180701060101", "180701060102", "180701060604", "180701060606", "180701060701", "180701060702", "180701060703", "180701070001", "180702010001", "180702010002", "180702030705", "180702031003", "180702040201", "180702040202", "180703030504", "180703041201", "180703041202", "180703041300", "180703050501", "180703050502", "180703051102", "180703051103", "180703051104", "180703051105", "180703051201", "180703051202", "180703051303", "180703051304", "180902060105", "180902060401", "180902060901", "180902060902", "180902061103", "180902061302", "180902061303", "180902061304", "180902061305", "180902061306", "180902061308", "180902061402", "180902061404", "180902061405", "180902061406", "180902061408", "180902061501", "180902061601", "180902061702", "180902061703", "180902061704", "180902061705", "180902061802", "180902061901", "180902061902", "180902061903", "180902062001", "180902062003", "180902062004", "180902080303", "180902080401", "180902080502", "180902080503", "180902080504", "180902080701", "180902080703", "180902080704", "181001000301", "181001000302", "181001000402", "181001000403", "181001000501", "181001000503", "181001000603", "181001000604", "181001000701", "181001000702", "181001000704", "181001000905", "181001000906", "181001001001", "181001001502", "181001001503", "181001001603", "181001001702", "181001004401", "181001004402", "181001004404", "181002010302", "181002010304", "181002010404", "181002010602", "181002010604", "181002010705", "181002010801", "181002010804", "181002020108", "181002020202", "181002020203", "181002020301", "181002020302", "181002020303", "181002020305", "181002030104", "181002030303", "181002030304", "181002030601", "181002030602", "181002030701", "181002040904", "181002041003", "181002041005", "181002041007", "181002041501", "181002041505", "181002041508")
+```
+
+
+```{r}
+( sc_clean = sc %>% filter(!HUC12 %in% targetSC) )
+```
+
+## NC
+
+### Correct # of rows
+774
+```{r}
+774*3*3*3*4
+```
+```{r}
+( nc = fvsHucs %>% filter(RRK=='NC') )
+```
+
+```{r}
+ncOrg
+( xnc = data_frame(aggregate(nc$HUC12, list(num=nc$HUC12), length)) )
+
+(checkNchucs = xnc %>% rename(HUC12=num) %>% mutate(HUC12=as.character(HUC12)) %>% left_join(ncOrg, by='HUC12') )
+( new_DF_NC <- subset(checkNchucs, is.na(checkNchucs$RRK)) )
+```
+```{r}
+cat(paste0(sprintf('"%s"', unique(new_DF_NC$HUC12)), collapse = ", "))
+```
+```{r}
+targetNC = c("180201041006", "180201160310", "180500020802")
+```
+
+```{r}
+( nc_clean = nc %>% filter(!HUC12 %in% targetNC) )
+```
+
+# Recombine data from the four RRKs
+```{r}
+435+774+1148+480
+2837*3*3*3*4
+```
+```{r}
+( dataFvs = bind_rows(cc_clean, nc_clean, sn_clean, sc_clean) )
+```
+
+# NEXT
+
+```{r}
+dataFvs %>% group_by(RRK) %>% 
+  summarise(n = n_distinct(HUC12))
+```
+
+
 # Write Summary Table
 ```{r}
-write.csv(fvsHucs, "../outputs/fvs/FVSprocessedOutputsHucs.csv", row.names = F)
+write.csv(dataFvs, "../outputs/fvs/FVSprocessedOutputsHucs.csv", row.names = F)
 ```

@@ -90,7 +90,9 @@ huc %>% group_by(RRK_Region) %>%
   summarise(n = n())
 ```
 
-
+```{r}
+435+774+1148+480
+```
 
 
 # Add Percentile group

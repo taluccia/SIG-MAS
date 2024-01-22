@@ -20,7 +20,6 @@ library(vroom)
 library(tidyr)
 ```
 
-
 # Data
 ## HUC12
 ```{r}
@@ -81,8 +80,19 @@ txHucs = joinTxHuc %>%
 txHucs
 ```
 
+
+```{r}
+txHucsPrctGroups = joinTxHuc %>% 
+  dplyr::select(huc12, count, tx_code, tx_type, VegClass, RRK, Priority, TxIntense, TxWPrct, TxRffcP, TxBpPrc) %>%
+  rename(RunId = VegClass) %>%
+  st_drop_geometry()
+```
 # Write to shapefile
 
 ```{r eval=FALSE, include=FALSE}
 st_write(txHucs, "../outputs/TxRunsHucs.shp", driver="ESRI Shapefile")
+```
+
+```{r eval=FALSE, include=FALSE}
+write.csv(txHucsPrctGroups, "../outputs/Huc12GroupPercents.csv", row.names = F)
 ```
