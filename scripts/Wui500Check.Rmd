@@ -1,0 +1,112 @@
+---
+title: "WUI 500 RUNID Veg"
+author: "Anna Talucci"
+date: "11/6/2023"
+output: html_document
+---
+
+---
+title: "Summarize Treatment Runs"
+author: "Anna Talucci"
+date: "10/11/2023"
+output: html_document
+---
+
+# Overview
+Summary product for MAS: acres treated per year by region by veg type. Forest/woodland/shrub/grass
+
+One table, columns = region, priority, treatment intensity (500k, 1m, 2.3 mil), and Years (1-5, 6-10, 11-15, 16-20; equivalent to percentile group)
+
+
+
+# Library
+```{r}
+library(tidyverse)
+library(sf)
+library(vroom)
+library(tidyr)
+```
+
+
+# Data
+
+## List of csv files
+```{r}
+wlistRuns <- list.files(path="../data/RunIdVegWui500",pattern='csv$', full.names = TRUE)
+```
+
+```{r}
+wlistRuns
+```
+
+
+
+### Name items in a list with file name
+```{r}
+names(wlistRuns) <- tools::file_path_sans_ext(basename(wlistRuns))
+```
+
+```{r}
+wlistRuns
+```
+# Functions
+```{r}
+wpart1 <- function(list){
+  purrr::map(list, read.csv) %>%
+    map2(names(.), ~mutate(.x, Tx = .y)) %>%
+  bind_rows() %>%
+    separate(., Tx, into = c("VegClass", "RunId", "RRK", "Priority", "TxIntense", "dateProc"), sep = '_', convert=TRUE, extra='merge') %>%
+    mutate(vegType = ifelse(VegClass == "Class1", "Herb",
+                                     ifelse(VegClass == "Class2", "Shrub",
+                                            ifelse(VegClass == "Class3", "Hardwood",
+                                                   ifelse(VegClass == "Class4", "Softwood", "F")))))  
+}
+```
+
+%>%
+
+    group_by(RRK, Priority, TxIntense,VegClass, vegType, tx_code, tx_type) %>%
+     summarize(TxSqM = sum(sum)) %>%
+        mutate(TxAcres = TxSqM/4047) %>%
+    dplyr::select(RRK, Priority, TxIntense, tx_type, tx_code, VegClass, vegType, TxSqM, TxAcres)
+
+
+
+```{r}
+( wrun_part1 = wpart1(wlistRuns) )
+```
+```{r}
+unique(wrun_part1$tx_type)
+```
+
+```{r}
+(t1 = wrun_part1 %>% filter(tx_type== "year_int_16-20") )
+unique(t1$RunId)
+```
+
+```{r}
+( t2 = wrun_part1 %>% filter(tx_type== "year_int_1-5") )
+unique(t2$RunId)
+```
+
+```{r}
+unique(wuicheck$tx_type)
+```
+```{r}
+( biggroupsum = run_part1 %>% 
+    group_by(Priority, TxIntense, tx_type) %>%
+     summarize(TotAcres = sum(TxAcres)) )
+```
+
+
+```{r}
+unique(run_part1$tx_type)
+```
+
+```{r}
+
+(huc_runs = combine(listRuns))
+```
+
+
+

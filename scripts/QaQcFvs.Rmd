@@ -1,0 +1,110 @@
+---
+title: "QAQC FVS"
+author: "Anna Talucci"
+date: "1/13/2024"
+output: html_document
+---
+
+# Global options
+prevent scientific notation; use =0 to reset
+```{r}
+options(scipen=999)
+```
+
+# Library
+```{r}
+library(tidyverse)
+
+library(vroom)
+
+```
+
+
+# Data
+
+```{r}
+fvs = read_csv("../data/FVS/FVSprocessedOutputsHucs.csv")
+```
+
+```{r}
+fvs
+```
+
+```{r}
+huc = read_csv("../data/TxHucs/Huc12GroupPercents.csv")
+huc
+```
+```{r}
+unique(huc$Priority)
+```
+```{r}
+hucs = huc  %>% 
+  rename(HUC12=huc12, TxType = tx_type, TxIntensity = TxIntense, run=RunId) %>%
+  dplyr::select(HUC12, TxWPrct, TxRffcP, TxBpPrc)
+```
+
+
+```{r}
+( sn = fvs %>% filter(RRK =="SN") %>% left_join(., hucs, by=c("HUC12")) %>% distinct())
+```
+
+```{r}
+( sc = fvs %>% filter(RRK =="SC") %>% left_join(., hucs, by=c("HUC12")) %>% distinct())
+```
+
+
+```{r}
+( cc = fvs %>% filter(RRK =="CC") %>% left_join(., hucs, by=c("HUC12")) %>% distinct())
+```
+
+
+```{r}
+( nc = fvs %>% filter(RRK =="NC ") %>% left_join(., hucs, by=c("HUC12")) %>% distinct())
+```
+
+# Recombine
+
+```{r}
+
+(data = bind_rows(sn, sc, cc, nc))
+```
+
+# Summaraize by Percentile groups
+
+```{r}
+( wui = data %>% 
+  filter(Priority=="WUI") %>% 
+  group_by(RRK, TxWPrct, TxIntensity, TxType, Year) %>%
+  summarise_at(vars('TSC', 'QMD', 'SDI', 'Fuel_lt3', 'Fuel_3to6', 'Fuel_6to12'), .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  dplyr::select(RRK:Year, TSC_mean, TSC_sd, TSC_median, TSC_min, TSC_max, QMD_mean, QMD_sd, QMD_median, QMD_min, QMD_max, SDI_mean, SDI_sd, SDI_median, SDI_min, SDI_max, Fuel_lt3_mean, Fuel_lt3_sd, Fuel_lt3_median, Fuel_lt3_min, Fuel_lt3_max, Fuel_3to6_mean, Fuel_3to6_sd, Fuel_3to6_median, Fuel_3to6_min, Fuel_3to6_max, Fuel_6to12_mean, Fuel_6to12_sd, Fuel_6to12_median, Fuel_6to12_min, Fuel_6to12_max))
+  
+```
+
+```{r}
+( hybrid = data %>% 
+  filter(Priority=="RFFC") %>% 
+  group_by(RRK, TxWPrct, TxIntensity, TxType, Year) %>%
+  summarise_at(vars('TSC', 'QMD', 'SDI', 'Fuel_lt3', 'Fuel_3to6', 'Fuel_6to12'), .funs = lst(mean, sd, median, min, max), na.rm = TRUE)%>%
+  dplyr::select(RRK:Year, TSC_mean, TSC_sd, TSC_median, TSC_min, TSC_max, QMD_mean, QMD_sd, QMD_median, QMD_min, QMD_max, SDI_mean, SDI_sd, SDI_median, SDI_min, SDI_max, Fuel_lt3_mean, Fuel_lt3_sd, Fuel_lt3_median, Fuel_lt3_min, Fuel_lt3_max, Fuel_3to6_mean, Fuel_3to6_sd, Fuel_3to6_median, Fuel_3to6_min, Fuel_3to6_max, Fuel_6to12_mean, Fuel_6to12_sd, Fuel_6to12_median, Fuel_6to12_min, Fuel_6to12_max) )
+  
+```
+
+```{r}
+( fire = data %>% 
+  filter(Priority=="Fire") %>% 
+  group_by(RRK, TxWPrct, TxIntensity, TxType, Year) %>%
+  summarise_at(vars('TSC', 'QMD', 'SDI', 'Fuel_lt3', 'Fuel_3to6', 'Fuel_6to12'), .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>%
+  dplyr::select(RRK:Year, TSC_mean, TSC_sd, TSC_median, TSC_min, TSC_max, QMD_mean, QMD_sd, QMD_median, QMD_min, QMD_max, SDI_mean, SDI_sd, SDI_median, SDI_min, SDI_max, Fuel_lt3_mean, Fuel_lt3_sd, Fuel_lt3_median, Fuel_lt3_min, Fuel_lt3_max, Fuel_3to6_mean, Fuel_3to6_sd, Fuel_3to6_median, Fuel_3to6_min, Fuel_3to6_max, Fuel_6to12_mean, Fuel_6to12_sd, Fuel_6to12_median, Fuel_6to12_min, Fuel_6to12_max) )
+  
+```
+
+
+
+
+```{r}
+write.csv(wui, "../outputs/fvs/qaqcWui.csv", row.names = F)
+write.csv(hybrid, "../outputs/fvs/qaqcHybrid.csv", row.names = F)
+write.csv(fire, "../outputs/fvs/qaqcFire.csv", row.names = F)
+```
+
+
