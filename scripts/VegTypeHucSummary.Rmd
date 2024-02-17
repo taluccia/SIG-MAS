@@ -33,13 +33,29 @@ veg1 = veg %>%
   mutate(propHW = round(hardwoodsumsqkm/vegsumsqkm, 2),
          propSW = round(softwoodsumsqkm/vegsumsqkm, 2),
          propShrb = round(shrubsumsqkm/vegsumsqkm, 2),
-         propHrb = round(herbsumsqkm/vegsumsqkm,2))
+         propHrb = round(herbsumsqkm/vegsumsqkm,2)) %>%
+  mutate(prctHW = round((hardwoodsumsqkm/vegsumsqkm)*100, 2),
+         prctSW = round((softwoodsumsqkm/vegsumsqkm)*100, 2),
+         prctShrb = round((shrubsumsqkm/vegsumsqkm)*100, 2),
+         prctHrb = round((herbsumsqkm/vegsumsqkm)*100,2))
 ```
 
 ```{r}
 veg1
 ```
 
+```{r}
+(
+  vegHucPropPrct = veg1 %>% dplyr::select(RRK_Region, huc12, propHW:prctHrb) %>%
+  rename(Region = RRK_Region)
+)
+```
+
+```{r}
+write.csv(vegHucPropPrct, "../outputs/HUC12PropPrctVegType.csv", row.names = F)
+```
+
+# Calculate HUCs
 ```{r}
 ( veg2 = veg1 %>% 
   group_by(RRK_Region) %>%
@@ -54,7 +70,11 @@ veg1
     mutate(propHW = round(totHW/totVeg, 2), 
            propSW = round(totSW/totVeg, 2), 
            propShrb = round(totShrb/totVeg, 2), 
-           propHrb = round(totHrb/totVeg, 2))
+           propHrb = round(totHrb/totVeg, 2)) %>%
+    mutate(prctHW = round((totHW/totVeg)*100, 2), 
+           prctSW = round((totSW/totVeg)*100, 2), 
+           prctShrb = round((totShrb/totVeg)*100, 2), 
+           prctHrb = round((totHrb/totVeg)*100, 2))
 )
 ```
 ```{r}

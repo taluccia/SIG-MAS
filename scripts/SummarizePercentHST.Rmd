@@ -15,7 +15,7 @@ library(skimr)
 
 # Data
 ```{r}
-allHucs = read.csv("../data/AllHucsHST.csv")
+allHucs = read.csv("../data/vegType/AllHucsHST.csv")
 ```
 2,944 rows
 ```{r}

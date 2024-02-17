@@ -1,0 +1,94 @@
+---
+title: "FVSZeroIssue"
+author: "Anna Talucci"
+date: "1/24/2024"
+output: html_document
+---
+
+
+# Overview
+Summary table for FVS Processed outputs by RRK
+
+# Global options
+prevent scientific notation; use =0 to reset
+```{r}
+options(scipen=999)
+```
+
+# Library
+```{r}
+library(tidyverse)
+
+library(vroom)
+
+
+library(sf)
+library(viridis)
+```
+
+
+# Data
+
+```{r}
+fvs = read_csv("../data/FVS/FVSprocessedOutputsHucs.csv")
+```
+
+```{r}
+fvs
+```
+
+# Zero Values
+
+```{r}
+( zeroData = fvs %>% filter_all(any_vars( . == 0)))
+```
+```{r}
+fvs %>% filter(if_any(where(is.numeric), is.infinite))
+```
+```{r}
+unique(zeroData$HUC12)
+unique(zeroData$RRK)
+```
+```{r}
+data_frame(unique(zeroData$HUC12))
+```
+```{r}
+cat(paste0(sprintf('%s', unique(zeroData$HUC12)), collapse = ", "))
+```
+
+```{r}
+cat(paste0(sprintf("'%s'", unique(zeroData$HUC12)), collapse = ", "))
+```
+
+# Investigate SC Zero Issue
+180703020405
+```{r}
+(scZero = fvs %>% filter(RRK=="SC") %>% filter(TSC==0) )
+
+cat(paste0(sprintf('%s', unique(scZero$HUC12)), collapse = ", "))
+
+```
+
+# HUC Data
+```{r}
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
+```{r}
+hucs
+```
+# Join csv to HUC shapefile
+```{r}
+(shp = hucs %>% rename(HUC12=huc12) %>%mutate(HUC12=as.numeric(HUC12)) %>% full_join(fvs, by='HUC12') )
+```
+
+```{r}
+( zeroDataShp = shp %>% filter(HUC12 %in% c(180300121404, 180300121803, 180300122201, 180300121901, 180902050302, 180902050402, 180902060503, 180600140102, 180600140103, 180600140201, 180600140202, 180701070002, 180701070003, 180701070004, 181002010703, 181002010704, 181002020304, 181002030501, 181002030502, 181002041002)))
+```
+```{r eval=FALSE, include=FALSE}
+st_write(zeroDataShp, "../outputs/FvsZeroDataShp.shp", driver="ESRI Shapefile")
+```
+```{r}
+
+ggplot(zeroDataShp ) +
+    geom_sf(aes(fill = "RRK"), lwd = 0)
+```

@@ -1,0 +1,24 @@
+---
+title: "Read in shapfiles to look at attributes"
+author: "Anna Talucci"
+date: "2/2/2024"
+output: html_document
+---
+
+# Overview
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+```
+
+# Data
+## RRK
+```{r}
+TxHucScCc = st_read("../outputs/boundaries/hucsShp/TxHucScCc.shp", "TxHucScCc")
+```
+
+```{r}
+TxHucScCc
+```

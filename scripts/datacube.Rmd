@@ -1,0 +1,788 @@
+---
+title: "datacube"
+author: "Anna Talucci"
+date: "2/7/2024"
+output: html_document
+---
+
+## Set global options
+Prevent scientific notation of numeric values; use =0 to reset
+```{r}
+options(scipen=999)
+```
+
+# Library
+```{r}
+library(tidyverse)
+library(cowplot)
+```
+
+# Data
+Read in FVS HUC12 level data.
+```{r}
+df = read_csv("../data/datacube/datacube_weighted_20240205.csv")
+```
+
+```{r}
+df
+```
+
+```{r}
+df %>% 
+  filter(Year==2024) %>%
+  filter(TxIntensity=="500k") %>%
+    group_by(Region, TxType) %>%
+  summarize(meanexpBurn = mean(expBurn),
+            meanexpFlame = mean(expFlame),
+            medianexpBurn = median(expBurn),
+            medianexpFlame = median(expFlame),
+            maxexpBurn = max(expBurn),
+            maxexpFlame = max(expFlame))
+
+
+
+```
+
+```{r}
+( sc_fire = df %>% 
+  dplyr::select(HUC12:Year, fireGroup:Fuel_6to12) %>%
+  filter(Region=="SC") %>%
+  filter(Year==2044) %>%
+  filter(Priority=="Fire") %>%
+    group_by(TxIntensity, TxType, fireGroup) %>%
+  summarize(meanTSC = mean(TSC),
+            meanQMD = mean(QMD),
+            meanSDI = mean(SDI), 
+            meanFlt3 = mean(Fuel_lt3),
+            meanF3to6 = mean(Fuel_3to6),
+            meanF6to12 = mean(Fuel_6to12))
+)
+
+
+```
+
+```{r}
+sc_tsc = ggplot(sc_fire, aes(TxIntensity, meanTSC)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean TSC") +
+  facet_wrap(~TxType + as.factor(fireGroup),  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+
+```{r}
+sc_qmd = ggplot(sc_fire, aes(TxIntensity, meanQMD)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean QMD") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+
+```
+
+```{r}
+sc_sdi = ggplot(sc_fire, aes(TxIntensity, meanSDI)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean SDI") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+
+```
+
+```{r}
+sc_flt3 = ggplot(sc_fire, aes(TxIntensity, meanFlt3)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel lt 3") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+```{r}
+sc_f3to6 = ggplot(sc_fire, aes(TxIntensity, meanF3to6)) +
+  geom_bar(stat = "identity", aes(legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel 3 to 6") +
+  facet_wrap(~TxType+fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+
+```{r}
+sc_f6to12 = ggplot(sc_fire, aes(TxIntensity, meanF6to12)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel 6 to 12") +
+  facet_wrap(~TxType  + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+```{r}
+theme_georgia <- function(...) {
+  theme_gray(base_family = "Georgia", ...) + 
+    theme(plot.title = element_text(face = "bold"))
+}
+
+title_theme <- calc_element("plot.title", theme_georgia())
+
+title_sc = ggdraw() + 
+  draw_label(
+    "SC Fire Priority 2044",
+    fontfamily = title_theme$family,
+    fontface = title_theme$face,
+    size = title_theme$size
+  )
+```
+
+
+```{r}
+grid_sc = cowplot::plot_grid(sc_tsc, sc_qmd, sc_sdi, sc_flt3, sc_f3to6, sc_f6to12) 
+  
+title_grid_sc = plot_grid(title_sc, grid_sc, ncol = 1, rel_heights = c(0.1, 1))
+```
+
+```{r}
+ggsave("../figures/FVS_SC_Fire_2044.png", plot = title_grid_sc, width = 10, height = 10, units = c("in"), dpi = 600, bg="white")
+```
+
+# CC
+```{r}
+( cc_fire = df %>% 
+  dplyr::select(HUC12:Year, fireGroup:Fuel_6to12) %>%
+  filter(Region=="CC") %>%
+  filter(Year==2024) %>%
+  filter(Priority=="Fire") %>%
+    group_by(TxIntensity, TxType, fireGroup) %>%
+  summarize(meanTSC = mean(TSC),
+            meanQMD = mean(QMD),
+            meanSDI = mean(SDI), 
+            meanFlt3 = mean(Fuel_lt3),
+            meanF3to6 = mean(Fuel_3to6),
+            meanF6to12 = mean(Fuel_6to12))
+)
+
+
+```
+
+```{r}
+cc_tsc = ggplot(cc_fire, aes(TxIntensity, meanTSC)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean TSC") +
+  facet_wrap(~TxType + as.factor(fireGroup),  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+
+```{r}
+cc_qmd = ggplot(cc_fire, aes(TxIntensity, meanQMD)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean QMD") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+
+```
+
+```{r}
+cc_sdi = ggplot(cc_fire, aes(TxIntensity, meanSDI)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean SDI") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+
+```
+
+```{r}
+cc_flt3 = ggplot(cc_fire, aes(TxIntensity, meanFlt3)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel lt 3") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+```{r}
+cc_f3to6 = ggplot(cc_fire, aes(TxIntensity, meanF3to6)) +
+  geom_bar(stat = "identity", aes(legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel 3 to 6") +
+  facet_wrap(~TxType+fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+
+```{r}
+cc_f6to12 = ggplot(cc_fire, aes(TxIntensity, meanF6to12)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel 6 to 12") +
+  facet_wrap(~TxType  + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+```{r}
+theme_georgia <- function(...) {
+  theme_gray(base_family = "Georgia", ...) + 
+    theme(plot.title = element_text(face = "bold"))
+}
+
+title_theme <- calc_element("plot.title", theme_georgia())
+
+title_cc = ggdraw() + 
+  draw_label(
+    "CC Fire Priority Baseline (2024)",
+    fontfamily = title_theme$family,
+    fontface = title_theme$face,
+    size = title_theme$size
+  )
+```
+
+
+```{r}
+grid_cc = cowplot::plot_grid(cc_tsc, cc_qmd, cc_sdi, cc_flt3, cc_f3to6, cc_f6to12) 
+  
+title_grid_cc = plot_grid(title_cc, grid_cc, ncol = 1, rel_heights = c(0.1, 1))
+```
+
+```{r}
+ggsave("../figures/FVS_CC_Fire_Baseline.png", plot = title_grid_cc, width = 10, height = 10, units = c("in"), dpi = 600, bg="white")
+```
+
+
+# NC
+```{r}
+( nc_fire = df %>% 
+  dplyr::select(HUC12:Year, fireGroup:Fuel_6to12) %>%
+  filter(Region=="NC") %>%
+  filter(Year==2024) %>%
+  filter(Priority=="Fire") %>%
+    group_by(TxIntensity, TxType, fireGroup) %>%
+  summarize(meanTSC = mean(TSC),
+            meanQMD = mean(QMD),
+            meanSDI = mean(SDI), 
+            meanFlt3 = mean(Fuel_lt3),
+            meanF3to6 = mean(Fuel_3to6),
+            meanF6to12 = mean(Fuel_6to12))
+)
+
+
+```
+
+```{r}
+nc_tsc = ggplot(nc_fire, aes(TxIntensity, meanTSC)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean TSC") +
+  facet_wrap(~TxType + as.factor(fireGroup),  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+
+```{r}
+nc_qmd = ggplot(nc_fire, aes(TxIntensity, meanQMD)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean QMD") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+
+```
+
+```{r}
+nc_sdi = ggplot(nc_fire, aes(TxIntensity, meanSDI)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean SDI") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+
+```
+
+```{r}
+nc_flt3 = ggplot(nc_fire, aes(TxIntensity, meanFlt3)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel lt 3") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+```{r}
+nc_f3to6 = ggplot(nc_fire, aes(TxIntensity, meanF3to6)) +
+  geom_bar(stat = "identity", aes(legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel 3 to 6") +
+  facet_wrap(~TxType+fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+
+```{r}
+nc_f6to12 = ggplot(nc_fire, aes(TxIntensity, meanF6to12)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel 6 to 12") +
+  facet_wrap(~TxType  + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+```{r}
+theme_georgia <- function(...) {
+  theme_gray(base_family = "Georgia", ...) + 
+    theme(plot.title = element_text(face = "bold"))
+}
+
+title_theme <- calc_element("plot.title", theme_georgia())
+
+title_nc = ggdraw() + 
+  draw_label(
+    "NC Fire Priority Baseline (2024)",
+    fontfamily = title_theme$family,
+    fontface = title_theme$face,
+    size = title_theme$size
+  )
+```
+
+
+```{r}
+grid_nc = cowplot::plot_grid(nc_tsc, nc_qmd, nc_sdi, nc_flt3, nc_f3to6, nc_f6to12) 
+  
+title_grid_nc = plot_grid(title_nc, grid_nc, ncol = 1, rel_heights = c(0.1, 1))
+```
+
+```{r}
+ggsave("../figures/FVS_NC_Fire_Baseline.png", plot = title_grid_nc, width = 10, height = 10, units = c("in"), dpi = 600, bg="white")
+```
+
+# SN
+```{r}
+( sn_fire = df %>% 
+  dplyr::select(HUC12:Year, fireGroup:Fuel_6to12) %>%
+  filter(Region=="SN") %>%
+  filter(Year==2024) %>%
+  filter(Priority=="Fire") %>%
+    group_by(TxIntensity, TxType, fireGroup) %>%
+  summarize(meanTSC = mean(TSC),
+            meanQMD = mean(QMD),
+            meanSDI = mean(SDI), 
+            meanFlt3 = mean(Fuel_lt3),
+            meanF3to6 = mean(Fuel_3to6),
+            meanF6to12 = mean(Fuel_6to12))
+)
+
+
+```
+
+```{r}
+sn_tsc = ggplot(sn_fire, aes(TxIntensity, meanTSC)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean TSC") +
+  facet_wrap(~TxType + as.factor(fireGroup),  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+
+```{r}
+sn_qmd = ggplot(sn_fire, aes(TxIntensity, meanQMD)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean QMD") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+
+```
+
+```{r}
+sn_sdi = ggplot(sn_fire, aes(TxIntensity, meanSDI)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean SDI") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+
+```
+
+```{r}
+sn_flt3 = ggplot(sn_fire, aes(TxIntensity, meanFlt3)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel lt 3") +
+  facet_wrap(~TxType + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+```{r}
+sn_f3to6 = ggplot(sn_fire, aes(TxIntensity, meanF3to6)) +
+  geom_bar(stat = "identity", aes(legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel 3 to 6") +
+  facet_wrap(~TxType+fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+
+```{r}
+sn_f6to12 = ggplot(sn_fire, aes(TxIntensity, meanF6to12)) +
+  geom_bar(stat = "identity", aes( legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Mean Fuel 6 to 12") +
+  facet_wrap(~TxType  + fireGroup,  ncol = 4 ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Intensity") +
+  theme(legend.position = "none") 
+```
+
+```{r}
+theme_georgia <- function(...) {
+  theme_gray(base_family = "Georgia", ...) + 
+    theme(plot.title = element_text(face = "bold"))
+}
+
+title_theme <- calc_element("plot.title", theme_georgia())
+
+title_sn = ggdraw() + 
+  draw_label(
+    "SN Fire Priority Baseline (2024)",
+    fontfamily = title_theme$family,
+    fontface = title_theme$face,
+    size = title_theme$size
+  )
+```
+
+
+```{r}
+grid_sn = cowplot::plot_grid(sn_tsc, sn_qmd, sn_sdi, sn_flt3, sn_f3to6, sn_f6to12) 
+  
+title_grid_sn = plot_grid(title_sn, grid_sn, ncol = 1, rel_heights = c(0.1, 1))
+```
+
+```{r}
+ggsave("../figures/FVS_SN_Fire_Baseline.png", plot = title_grid_sn, width = 10, height = 10, units = c("in"), dpi = 600, bg="white")
+```
+
+# Total burn acres
+```{r}
+( totalBurn = df %>% 
+    group_by(Region, Priority, TxIntensity, TxType, Year) %>% 
+    summarise(totalBurn = sum(expBurn)) %>% 
+    mutate(IntenseType = paste(TxIntensity,"-", TxType)) %>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6")))
+)
+```
+
+## Bar Plot
+```{r }
+totalBurn %>% filter(Region=="SN") %>% 
+  ggplot(aes(IntenseType, totalBurn)) +
+  geom_bar(stat = "identity", aes(fill = as.factor(Year)), position = position_dodge(width = 0.9)) + 
+
+  scale_y_continuous("Total acres burned") +
+  facet_wrap(~Priority,  ncol = 3 ) +
+  scale_fill_manual(values=c('#d53e4f','#fee08b','#abdda4', '#3288bd'), name="Year") + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Priority & treatment type") +
+  theme(legend.position = "bottom") +
+  labs(title="SN Total acres burned per time step")
+
+```
+
+# WUI SC
+
+```{r}
+( wui = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="WUI") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SC")
+
+)
+  
+
+```
+
+```{r}
+( wui24 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="WUI") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SC") %>%
+    filter(Year==2024) %>%
+    filter(wuiGroup==25)
+
+)
+  
+
+```
+
+```{r}
+( wui29 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="WUI") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SC") %>%
+    filter(Year==2029) %>%
+    filter(wuiGroup==25)
+
+)
+  
+
+```
+
+```{r}
+( wui34 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="WUI") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SC") %>%
+    filter(Year==2034) %>%
+    filter(wuiGroup==50)
+
+)
+  
+
+```
+
+```{r}
+( wui44 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="WUI") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SC") %>%
+    filter(Year==2044) %>%
+    filter(wuiGroup==25)
+
+)
+  
+
+```
+
+```{r}
+wuidf = bind_rows(wui24, wui29, wui34, wui44)
+```
+
+## box Plot
+```{r}
+ggplot(wuidf, aes(IntenseType, (expBurn))) +
+  geom_boxplot( aes(fill = as.factor(Year), legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Burned acres") +
+  #facet_wrap(~Region + Year ) +
+  scale_fill_manual(values=c('#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#abdda4','#66c2a5','#3288bd')) + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Priority & treatment type") +
+  theme(legend.position = "bottom") 
+
+```
+
+# FIRE SN
+
+```{r}
+( fire = df %>% 
+  dplyr::select(HUC12:fireGroup, expBurn, expFlame) %>%
+  filter(Priority=="Fire") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SN")
+
+)
+  
+
+```
+
+```{r}
+( fire24 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="Fire") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SC") %>%
+    filter(Year==2024) %>%
+    filter(wuiGroup==25)
+
+)
+  
+
+```
+
+```{r}
+( fire29 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="fire") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="sn") %>%
+    filter(Year==2029) %>%
+    filter(wuiGroup==25)
+
+)
+  
+
+```
+
+```{r}
+( fire34 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="Fire") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SN") %>%
+    filter(Year==2034) %>%
+    filter(wuiGroup==50)
+
+)
+  
+
+```
+
+```{r}
+( fire44 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="Fire") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SN") %>%
+    filter(Year==2044) %>%
+    filter(wuiGroup==100)
+
+)
+  
+
+```
+
+```{r}
+firedf = bind_rows(fire24, fire29, fire34, fire44)
+```
+
+## Box Plot
+```{r}
+ggplot(firedf, aes(IntenseType, (expBurn))) +
+  geom_boxplot( aes(fill = as.factor(Year), legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Burned acres") +
+  #facet_wrap(~Region + Year ) +
+  scale_fill_manual(values=c('#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#abdda4','#66c2a5','#3288bd'), name="Year") + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Priority & treatment type") +
+  theme(legend.position = "bottom") +
+  labs(title="SN Fire Priority Burned acres (expBurn)")
+
+```

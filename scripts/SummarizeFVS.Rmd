@@ -5,14 +5,6 @@ date: "12/19/2023"
 output: html_document
 ---
 
----
-title: "Summary FVS Processed Outputs"
-author: "Anna Talucci"
-date: "12/2/2023"
-output: html_document
----
-
-
 
 # Overview
 Summary table for FVS Processed outputs by RRK
@@ -42,19 +34,18 @@ fvs = read_csv("../data/FVS/FVSprocessedOutputsHucs.csv")
 fvs
 ```
 
-# Investigate SC Zero Issue
-180703020405
-```{r}
-(scZero = fvs %>% filter(RRK=="SC") %>% filter(TSC==0) )
 
-cat(paste0(sprintf('%s', unique(scZero$HUC12)), collapse = ", "))
-
-```
 # Basic Summary Stats
 ```{r}
 fvs
 ```
 
+## Check one huc
+```{r}
+fvs %>% filter(HUC12==180300031404) %>% filter(Year=="2024")
+```
+
+## TSC
 ```{r}
 TSCSummary = fvs %>% 
   group_by(RRK, Priority, TxIntensity, TxType, Year) %>%
@@ -62,8 +53,6 @@ TSCSummary = fvs %>%
   write.csv(., "../outputs/fvs/FvsTscSummary432.csv", row.names = F)
 ```
 
- %>%
-  write.csv(., "../outputs/fvs/FvsTscSummary.csv", row.names = F)
 ```{r}
 SDISummary = fvs %>% 
   group_by(RRK, Priority, TxIntensity, TxType, Year) %>%
@@ -163,7 +152,9 @@ TscChange = fvs %>%
          prct2034 = (diff2034/baseline)*100,
          prct2044 = (diff2044/baseline)*100) 
 ```
-
+```{r}
+TscChange
+```
 ```{r}
 write.csv(TscChange, "../outputs/fvs/TSCDiff.csv", row.names = F)
 ```

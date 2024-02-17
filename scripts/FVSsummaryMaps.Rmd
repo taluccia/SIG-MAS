@@ -15,11 +15,15 @@ library(viridis)
 
 # Data
 ```{r}
+states = st_read('../data/tl_2023_us_state/tl_2023_us_state.shp', 'tl_2023_us_state')  
+ca <- states %>% filter(STUSPS == "CA")
+```
+```{r}
 tsc = read_csv("../data/FVS/temporalChange/TSCDiff.csv")
 ```
 
 ```{r}
-head(tsc)
+tsc
 ```
 ```{r}
 tsc = tsc %>% rename(huc12 = HUC12) %>% mutate(huc12 = as.character(huc12))
@@ -62,9 +66,7 @@ shp2 = shp %>%
   summarise_at(vars('prct2029', 'prct2034', 'prct2044'), .funs = lst(mean, sd), na.rm = TRUE) 
 ```
 
-```{r}
-shp2
-```
+
 
 ```{r}
 my_breaks <- c(-5, 0, 10, 20, 30)
@@ -86,3 +88,28 @@ ggplot(shp2) +
                          na.value = "grey100", 
                          breaks = my_breaks, labels = my_breaks)
 ```
+
+
+## By treatment priorty, intensity...
+```{r}
+shp
+```
+```{r}
+( WUI500 = shp %>% filter(Priority=="WUI") %>% filter(TxIntensity=="500k") %>% group_by(RRK) %>%
+  summarise_at(vars('prct2029', 'prct2034', 'prct2044', 'yr_2024', 'yr_2029', 'yr_2034', 'yr_2044' ), .funs = lst(mean, sd), na.rm = TRUE) )
+```
+```{r}
+ggplot(ca) +
+  geom_sf()
+```
+```{r}
+my_breaks <- c(0, 25, 50, 100, 200)
+ggplot(WUI500) +
+
+    geom_sf(aes(fill = prct2044_mean), lwd = 0)+
+    scale_fill_gradientn(colours=rev(magma(5)),
+                         name="Percent Change\n20 years",
+                         na.value = "grey100", 
+                         breaks = my_breaks, labels = my_breaks)
+```
+

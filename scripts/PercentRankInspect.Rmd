@@ -18,37 +18,34 @@ library(sf)
 
 # Data
 ```{r}
-rank = read.csv("../data/csv/snHucTreat10WuiBpPrctRk_2023-04-29.csv")
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
 ```
-```{r}
-cc = st_read("../data/EEhucs/ccHucTreat10WuiBpPrctRk_2023-04-29.shp", "ccHucTreat10WuiBpPrctRk_2023-04-29")
-```
+
 
 # Look at data
 
 ```{r}
-glimpse(rank)
+glimpse(hucs)
 ```
 
 
 ```{r}
-skimr::skim(rank)
-```
- mutate(across(cols, round, 3))
-```{r}
-rank %>% 
-  dplyr::select(BpMean:RRK_Region, WIPGeoNam:areasqkm, huc12, name, states:sumsqkm) %>%
-  mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, sum, sumsqkm), round, 3)) %>%
-  summarize(minBpPrct = min(BpPrct),
-            maxBpPrct = max(BpPrct),
-            minWuiPrct = min(WuiPrct),
-            maxWuiPrct = max(WuiPrct),
-            minBpRank = min(BpRank),
+hucs %>% 
+  group_by(RRK_Rgn) %>%
+  summarize(minBpRank = min(BpRank),
             maxBpRank = max(BpRank),
             minWuiRank = min(WuiRank),
             maxWuiRank = max(WuiRank),)
 ```
 
+```{r}
+hucs %>% filter(RRK_Rgn=="South Coast Region") %>% filter(BpRank %in% c(1,2, 479, 480)) %>% select(huc12)
+```
+
+180701020106 
+180701020303 
+181002010703 
+181002020304
 
 ```{r}
 

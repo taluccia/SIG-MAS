@@ -1,0 +1,148 @@
+---
+title: "Boxplots fire Variables"
+author: "Anna Talucci"
+date: "2/7/2024"
+output: html_document
+---
+
+
+## Set global options
+Prevent scientific notation of numeric values; use =0 to reset
+```{r}
+options(scipen=999)
+```
+
+# Library
+```{r}
+library(tidyverse)
+```
+
+# Data
+Read in FVS HUC12 level data.
+```{r}
+df = read_csv("../data/datacube/datacube_weighted_20240205.csv")
+```
+
+```{r}
+df
+```
+
+
+# FIRE SN
+
+```{r}
+( fire = df %>% 
+  dplyr::select(HUC12:fireGroup, expBurn, expFlame) %>%
+  filter(Priority=="Fire") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SN")
+
+)
+  
+
+```
+
+## Box plot all data
+```{r}
+ggplot(fire, aes(IntenseType, (expBurn))) +
+  geom_boxplot( aes(fill = as.factor(Year), legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Burned acres") +
+  #facet_wrap(~Region + Year ) +
+  scale_fill_manual(values=c('#d53e4f','#fee08b','#abdda4', '#3288bd'), name="Year") + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Priority & treatment type") +
+  theme(legend.position = "bottom") +
+  labs(title="SN Fire Priority Burned acres (expBurn)")
+
+```
+
+## Subset for hucs treated for given year
+```{r}
+( fire24 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="Fire") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SC") %>%
+    filter(Year==2024) %>%
+    filter(wuiGroup==25)
+
+)
+  
+
+```
+
+```{r}
+( fire29 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="fire") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="sn") %>%
+    filter(Year==2029) %>%
+    filter(wuiGroup==25)
+
+)
+  
+
+```
+
+```{r}
+( fire34 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="Fire") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SN") %>%
+    filter(Year==2034) %>%
+    filter(wuiGroup==50)
+
+)
+  
+
+```
+
+```{r}
+( fire44 = df %>% 
+  dplyr::select(HUC12:wuiGroup, expBurn, expFlame) %>%
+  filter(Priority=="Fire") %>%
+    mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>%
+    #filter(expBurn<2000) %>%
+    filter(Region=="SN") %>%
+    filter(Year==2044) %>%
+    filter(wuiGroup==100)
+
+)
+  
+
+```
+
+```{r}
+firedf = bind_rows(fire24, fire29, fire34, fire44)
+```
+
+## Box Plot
+```{r}
+ggplot(firedf, aes(IntenseType, (expBurn))) +
+  geom_boxplot( aes(fill = as.factor(Year), legend = FALSE)) + 
+  #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
+              # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
+  scale_y_continuous("Burned acres") +
+  #facet_wrap(~Region + Year ) +
+  scale_fill_manual(values=c('#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#abdda4','#66c2a5','#3288bd'), name="Year") + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x="Priority & treatment type") +
+  theme(legend.position = "bottom") +
+  labs(title="SN Fire Priority Burned acres (expBurn)")
+
+```

@@ -8,10 +8,10 @@ output: html_document
 
 
 # Overview
-Summary table for FVS Processed outputs by RRK
+Takes outputs from FVS and clean the HUC12 level data so that the FVS output data csv file has been update for 2837 HUC12s across four RRK Regions (Central Coast Region [435], North Coast Region [774], Sierra Nevada Region [1148], South Coast Region [480]). Each HUC has output data for the combination of three Priorities, three Treatment Intensities, three treatments types, and four time steps, which results in a data table with 306,396 rows.
 
 # Global options
-prevent scientific notation; use =0 to reset
+Prevent scientific notation for number values; use =0 to reset
 ```{r}
 options(scipen=999)
 ```
@@ -205,7 +205,7 @@ targetSN = c('180902060105')
 ( cc_clean = bind_rows(noDupsCC, dupCC) )
 ```
 ```{r}
-cc %>% group_by(RRK) %>% 
+cc_clean %>% group_by(RRK) %>% 
   summarise(n = n_distinct(HUC12))
 ```
 
@@ -314,15 +314,26 @@ targetNC = c("180201041006", "180201160310", "180500020802")
 ( dataFvs = bind_rows(cc_clean, nc_clean, sn_clean, sc_clean) )
 ```
 
-# NEXT
+# Check
 
 ```{r}
 dataFvs %>% group_by(RRK) %>% 
   summarise(n = n_distinct(HUC12))
 ```
+# Replace RFFC with Hybrid
+```{r}
+unique(dataFvs$Priority)
+```
+```{r}
+dataFvs1 = dataFvs %>% 
+  mutate(Priority = str_replace(Priority, 'RFFC', 'Hybrid')) 
+```
 
+```{r}
+unique(dataFvs1$Priority)
+```
 
 # Write Summary Table
 ```{r}
-write.csv(dataFvs, "../outputs/fvs/FVSprocessedOutputsHucs.csv", row.names = F)
+write.csv(dataFvs1, "../outputs/fvs/FVSprocessedOutputsHucs.csv", row.names = F)
 ```
