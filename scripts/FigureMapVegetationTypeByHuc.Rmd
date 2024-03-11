@@ -16,6 +16,7 @@ library(RColorBrewer)
 library(scales)
 library(ggnewscale)
 library(cowplot)
+
 ```
 
 # Data
@@ -123,14 +124,14 @@ scale_fill_fermenter_custom <- function(pal, na.value = "grey50", guide = "colou
 
 
 HW1 = ggplot() +
-  geom_sf(data=ca, fill='#A9AB9D', colour='#A9AB9D') +
+  geom_sf(data=ca, fill="cornsilk3", colour="cornsilk3", alpha=.75) +
   
   new_scale_fill() +
     geom_sf(data=vegshp, aes(fill = propHW), lwd = 0)+
    scale_fill_fermenter_custom(pal) +
   coord_sf()+
   theme_minimal() + ggtitle("Proportion Hardwood") +
-  theme(legend.title=element_blank())
+  theme(legend.position = "none", legend.title=element_blank())
 
 HW1
 ```
@@ -147,14 +148,14 @@ scale_fill_fermenter_custom <- function(pal, na.value = "grey50", guide = "colou
 
 
 SW1 = ggplot() +
-  geom_sf(data=ca, fill='#A9AB9D', colour='#A9AB9D') +
+  geom_sf(data=ca, fill="cornsilk3", colour="cornsilk3", alpha=.75) +
   
   new_scale_fill() +
     geom_sf(data=vegshp, aes(fill = propSW), lwd = 0)+
    scale_fill_fermenter_custom(pal) +
   coord_sf()+
   theme_minimal() + ggtitle("Proportion Softwood") +
-  theme(legend.title=element_blank())
+  theme(legend.position = "none", legend.title=element_blank())
 
 SW1
 ```
@@ -173,14 +174,14 @@ scale_fill_fermenter_custom <- function(pal, na.value = "grey50", guide = "colou
 
 
 shb1 = ggplot() +
-  geom_sf(data=ca, fill='#A9AB9D', colour='#A9AB9D') +
+  geom_sf(data=ca, fill="cornsilk3", colour="cornsilk3", alpha=.75) +
   
   new_scale_fill() +
     geom_sf(data=vegshp, aes(fill = propShrb), lwd = 0)+
    scale_fill_fermenter_custom(pal) +
   coord_sf()+
   theme_minimal() + ggtitle("Proportion Shrub") +
-  theme(legend.title=element_blank())
+  theme(legend.position = "none", legend.title=element_blank())
 
 shb1
 ```
@@ -197,14 +198,15 @@ scale_fill_fermenter_custom <- function(pal, na.value = "grey50", guide = "colou
 
 
 herb1 = ggplot() +
-  geom_sf(data=ca, fill='#A9AB9D', colour='#A9AB9D') +
+  geom_sf(data=ca, fill="cornsilk3", colour="cornsilk3", alpha=.75) +
   
   new_scale_fill() +
     geom_sf(data=vegshp, aes(fill = propHrb), lwd = 0)+
    scale_fill_fermenter_custom(pal) +
   coord_sf()+
   theme_minimal() + ggtitle("Proportion Herb") +
-  theme(legend.title=element_blank())
+  theme(legend.position = "none",
+    legend.title=element_blank())
 
 herb1
 ```
@@ -212,8 +214,49 @@ herb1
 ```{r}
 ggsave("../figures/ProportionHerb.png", plot=herb1, dpi=600, bg="white")
 ```
+# Legend
+```{r}
+my_breaks <- c(0, .25, .50, .75, 1.00)
+pal <- c('#ffffcc','#c2e699','#78c679','#238443')
+
+scale_fill_fermenter_custom <- function(pal, na.value = "grey50", guide = "coloursteps", aesthetics = "fill", ...) {
+  binned_scale("fill", "fermenter", ggplot2:::binned_pal(scales::manual_pal(unname(pal))), na.value = na.value, guide = guide, ...)  
+}
+
+
+legend = ggplot() +
+  geom_sf(data=ca, fill="cornsilk3", colour="cornsilk3", alpha=.75) +
+  
+  new_scale_fill() +
+    geom_sf(data=vegshp, aes(fill = propHrb), lwd = 0)+
+   scale_fill_fermenter_custom(pal) +
+  coord_sf()+
+  theme_minimal() + ggtitle("Proportion Herb") +
+  theme(legend.position = "bottom",
+    legend.title=element_blank())
+
+legend
+```
+
 # Grid
 
 ```{r}
-cowplot::plot_grid(HW1, SW1, shb1, herb1)
+legend_b = cowplot::get_legend(legend)
 ```
+```{r}
+( vegPlot = cowplot::plot_grid(HW1, SW1, shb1, herb1) )
+```
+Needs magick, but can not install
+```{r eval=FALSE, include=FALSE}
+ggdraw(xlim=c(0,8), ylim=c(0,4)) +
+  draw_image("../figures/ProportionHardwood.png", scale=.9, x=0, y=1, width=2, height=3)+
+  draw_image("../figures/ProportionSoftwood.png", scale=.9, x=2, y=1, width=2, height=3)+
+  draw_image("../figures/ProportionShrub.png", scale=.9, x=0, y=1, width=4, height=3)+
+  draw_image("../figures/ProportionHerb.png", scale=.9, x=0, y=1, width=6, height=3)
+  
+```
+
+```{r}
+plot_grid(vegPlot, legend_b, ncol = 1, rel_heights = c(1, .1))
+```
+
