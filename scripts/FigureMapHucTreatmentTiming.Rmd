@@ -1,0 +1,97 @@
+---
+title: "Figure Map HUC Treatment Timing"
+author: "Anna Talucci"
+date: "3/10/2024"
+output: html_document
+---
+
+# Overview
+HUC Treatment timing
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+library(RColorBrewer)
+library(scales)
+library(ggnewscale)
+library(cowplot)
+
+```
+
+# Data
+
+```{r}
+ca = st_read("../data/boundaries/California.shp", "California")
+```
+
+```{r}
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
+
+
+# Figures
+
+## Fire Priority
+
+```{r}
+firePriority = ggplot() +
+  geom_sf(data=ca, fill="cornsilk3", colour="cornsilk3", alpha=.75) +
+  
+  new_scale_fill() +
+    geom_sf(data=hucs, aes(fill = as.factor(TxBpPrc)), lwd = 0)+
+   scale_fill_manual(values = c('#e31a1c', '#fd8d3c','#fecc5c','#ffffb2'), breaks = c("25","50","75","100"),
+                    labels = c("1-5","6-10","11-15","16-20"), name="Years") +
+  coord_sf()+
+  theme_minimal() + ggtitle("Fire Priority") +
+  theme(legend.position = "right")
+
+firePriority
+```
+```{r}
+ggsave("../figures/PriorityFire.png", plot=firePriority, dpi=600, bg="white")
+```
+
+## WUI Priority
+
+```{r}
+wuiHucs = hucs %>% filter(!TxWPrct==100)
+wuiPriority = ggplot() +
+  geom_sf(data=ca, fill="cornsilk3", colour="cornsilk3", alpha=.75) +
+  
+  new_scale_fill() +
+    geom_sf(data=wuiHucs, aes(fill = as.factor(TxWPrct)), lwd = 0)+
+   scale_fill_manual(values = c('#88419d', '#8c96c6','#b3cde3'), breaks = c("25","50","75"),
+                    labels = c("1-5 & 16-20","6-10","11-15"), name="Years") +
+  coord_sf()+
+  theme_minimal() + ggtitle("WUI Priority") +
+  theme(legend.position = "right")
+
+wuiPriority
+```
+
+```{r}
+ggsave("../figures/PriorityWui.png", plot=wuiPriority, dpi=600, bg="white")
+```
+
+## Hybrid Priority
+
+['#f6eff7','#bdc9e1','#67a9cf','#02818a']
+```{r}
+hybridPriority = ggplot() +
+  geom_sf(data=ca, fill="cornsilk3", colour="cornsilk3", alpha=.75) +
+  
+  new_scale_fill() +
+    geom_sf(data=hucs, aes(fill = as.factor(TxBpPrc)), lwd = 0)+
+   scale_fill_manual(values = c('#02818a', '#67a9cf','#bdc9e1','#f6eff7'), breaks = c("25","50","75","100"),
+                    labels = c("1-5","6-10","11-15","16-20"), name="Years") +
+  coord_sf()+
+  theme_minimal() + ggtitle("Hybrid Priority") +
+  theme(legend.position = "right")
+
+hybridPriority
+```
+
+```{r}
+ggsave("../figures/PriorityHybrid.png", plot=hybridPriority, dpi=600, bg="white")
+```
