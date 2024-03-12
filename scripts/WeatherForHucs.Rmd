@@ -8,7 +8,7 @@ output: html_document
 
 
 # Overview
-
+Generate json file for for each HUC for each time step with top 200 temperature days per time step.
 Filter weather data extracted from EE. Join weather data to Hucs. Convert from .shp to .json.
 
 Select daily weather based on 200 highest temperature days.
@@ -50,7 +50,7 @@ library('jsonlite')
 ## CSV weather data
 output from GEE
 ```{r}
-list <- list.files(path="../data/weather/timestep3544/sn", pattern='csv$', full.names = TRUE)
+list <- list.files(path="../data/weather/timestep3544/nc", pattern='csv$', full.names = TRUE)
 ```
 ```{r}
 list
@@ -99,6 +99,9 @@ orgDf2 <- function(x){
 
 ```
 ## Apply  functions
+```{r}
+list %>% combineCsv() %>% orgDf() # for sample size
+```
 
 ```{r}
 df = list %>% combineCsv() %>% orgDf() %>% temp() %>% orgDf2() 
@@ -123,7 +126,7 @@ x %>% arrange(date) %>%
     ungroup() %>%
   dplyr::select(-huc12, -date) %>%
   jsonlite::toJSON(pretty = TRUE, auto_unbox = TRUE) %>%
-  write(., paste("../outputs/jsonHuc/ts2044/sn/",huc12,'_2044.json'))
+  write(., paste("../outputs/jsonHuc/ts2039/nc/",huc12,'_2039.json'))
   
 }
 ```
@@ -134,245 +137,5 @@ dflist %>% map_dfr(~ .x %>% jsonFun())
 For SC Use values from 180701070002 for Huc 180701070003
 For cc use values from 180600020804 for Huc 180600150305
 
-# -------RUN ALL ABOVE HERE----------------------------------------
 
-
-
-
-
-```{r eval=FALSE, include=FALSE}
-df1
-df1 %>% jsonFun()
-```
-
-
-
-
-
-# PARKING LOT 
-
- group_split(g)
-```{r}
-b = df2 %>% 
-  ungroup()%>%
-    filter(huc12==180701060203) %>% 
-  mutate(foliar.moisture=82.2) %>%
-  dplyr::select(-RRK_Rgn, -model, -scenario) %>%
-    rename('relative-humidity'=relative.humidity, 'wind-from-direction'=wind.from.direction, 'wind-speed-20ft'=wind.speed.20ft, 'foliar-moisture'=foliar.moisture) %>%
-    arrange(date) %>%
-    ungroup() %>%
-  dplyr::select(-huc12, -date) %>%
-  jsonlite::toJSON(pretty = TRUE, auto_unbox = TRUE)
-```
-
-```{r}
-
-uni <- unique(scShp[,c("huc12")])
-
-for (j in 1:nrow(uni)) {
-  i <- uni[j,]
-  tmp <- scShp %>% filter(huc12 == i$huc12)
-  st_write(tmp, dsn = paste("../outputs/singleHucShp/sc/", i$huc12, '.shp'), driver="ESRI Shapefile", overwrite_layer=TRUE)
-}
-  
-```
-
-
-```{r}
-b
-```
-  
-# Correct json format but with square brackets
-This takes 1 huc, and produces a json that is almost correct except for the square brackets in the fuel moisture
-
-
-
-
-
-
-
-
-```{r}
-write(a, "../outputs/jsonHuc/180701060203.json")
-```
-
-
-```{r}
-df1 = df%>%
-    pivot_longer(cols = starts_with("GF"),
-    names_to = "variable",
-    values_to = "value", 
-    values_drop_na = TRUE) %>%
-    separate(col=variable, into=c("model","scenario","date", "climate"), sep="_", fill="right")  %>%
-    pivot_wider(names_from = climate, values_from = value) %>%
-    mutate(tasmax = ((tasmax-273.15)*9/5+32)) %>%
-    rename(temperature=tasmax, relative.humidity=rhsmin, wind.speed.20ft=ws, wind.from.direction=wd) 
-```
-
-jsonlite::write_json()
-
-#THESE LOOPS WORK BUT NEED TO BE ADAPTED FOR FORMATING THE JSON
-## SC
-```{r}
-
-uni <- unique(scShp[,c("huc12")])
-
-for (j in 1:nrow(uni)) {
-  i <- uni[j,]
-  tmp <- scShp %>% filter(huc12 == i$huc12)
-  st_write(tmp, dsn = paste("../outputs/singleHucShp/sc/", i$huc12, '.shp'), driver="ESRI Shapefile", overwrite_layer=TRUE)
-}
-  
-```
-
-
-## CC
-```{r}
-
-uni <- unique(ccShp[,c("huc12")])
-
-for (j in 1:nrow(uni)) {
-  i <- uni[j,]
-  tmp <- ccShp %>% filter(huc12 == i$huc12)
-  st_write(tmp, dsn = paste("../outputs/singleHucShp/cc/", i$huc12, '.shp'), driver="ESRI Shapefile", overwrite_layer=TRUE)
-}
-  
-```
-
-## For GEoJson
-### Sc
-```{r}
-
-uni <- unique(scShp[,c("huc12")])
-
-for (j in 1:nrow(uni)) {
-  i <- uni[j,]
-  tmp <- scShp %>% filter(huc12 == i$huc12)
-  st_write(tmp, dsn = paste("../outputs/jsonHuc/sc/", i$huc12, '.geojson'), driver="GeoJSON", overwrite_layer=TRUE)
-}
-  
-```
-
-### Cc
-```{r}
-
-uni <- unique(ccShp[,c("huc12")])
-
-for (j in 1:nrow(uni)) {
-  i <- uni[j,]
-  tmp <- ccShp %>% filter(huc12 == i$huc12)
-  st_write(tmp, dsn = paste("../outputs/jsonHuc/cc/", i$huc12, '.geojson'), driver="GeoJSON", overwrite_layer=TRUE)
-}
-  
-```
-
-
-
-
-
-
-# DOES NOT WORK
-splitByAttributes = function(spdata, codename, dsn=getwd()){
-CODES <- unique(spdata[[codename]])
-for (i in 1:length(CODES)) {
-  tmp <- spdata[spdata[[codename]] == CODES[i], ]
-  writeOGR(tmp, dsn=dsn, CODES[i], driver="ESRI Shapefile",
-           overwrite_layer=TRUE)
-  }
-}
-
-file = paste("./output/", cn ,"data.txt", sep = "")
-```{r}
-splitByAttributes = function(spdata, huc12){
-CODES <- unique(spdata[[huc12]])
-for (i in 1:length(CODES)) {
-  tmp <- spdata[spdata[[huc12]] == CODES[i], ]
-  st_write(tmp, file=paste("../outputs/singleHucShp/", CODES[i], ".shp"), driver="ESRI Shapefile", overwrite_layer=TRUE)
-  }
-}
-```
-
-
-```{r}
-splitByAttributes(scShp, scShp$huc12)
-
-```
-
-```{r}
-unique <- unique(scShp$huc12)
-
-#create new polygons based on the determined column
-for (i in 1:length(unique)) {
-  tmp <- scShp[scShp$huc12 == unique[i], ]
-  st_write(tmp, dsn = "../outputs/singleHucShp/", unique[i], driver="ESRI Shapefile", overwrite_layer=TRUE)
-  
-}
-```
-
-
-
-for (j in 1:nrow(uni)) {
-  i <- uni[j,]
-  tmp <- x %>% filter(Model == i$Model, Garage == i$Garage, City == i$City)
-
-  write.table(tmp, paste(i$Model, "_", i$City, "_", i$Garage, ".csv"))
-}
-
-
-```{r}
-test  = scShp %>% st_cast("POLYGON") %>% filter(huc12==180300031404) 
-```
-
-# RESOURCES
-https://cran.r-project.org/web/packages/tidyjson/vignettes/introduction-to-tidyjson.html
-
-```{r}
-( 
-  a = df2 %>% 
-  ungroup()%>%
-    filter(huc12==180701060203) %>% 
-  mutate(foliar.moisture=82.2) %>%
-    mutate(dead.1hr=0.02) %>%
-  mutate(dead.10hr = 0.02) %>%
-  mutate(dead.100hr=0.02) %>%
-  mutate(live.herbaceous = 0.34) %>%
-  mutate(live.woody = 0.67) %>%
-  dplyr::select(-RRK_Rgn, -model, -scenario) %>%
-    pivot_longer(cols = starts_with("dead"),
-    names_to = "variable",
-    values_to = "value") %>% 
-    separate(col=variable, into=c("x","y"), sep="\\.") %>%
-    pivot_wider(names_from = y, values_from = value) %>%
-    group_by(date) %>%
-    nest(data=c('1hr', '10hr', '100hr')) %>%
-    rename(dead=data) %>%
-    #nest_legacy(.key = "dead") %>%
-    mutate(dead = purrr::map(dead, as.list)) %>%
-    dplyr::select(-x) %>%
-    pivot_longer(cols = starts_with("live"),
-    names_to = "variable",
-    values_to = "value") %>% 
-    separate(col=variable, into=c("x","y"), sep="\\.") %>%
-    pivot_wider(names_from = y, values_from = value) %>%
-    nest(data=c(herbaceous, woody)) %>%
-    rename(live=data) %>%
-    #nest_legacy(.key = "live") %>%
-    mutate(live = purrr::map(live, as.list)) %>%
-    dplyr::select(-x) %>%
-    nest(data=c(dead, live)) %>%
-    rename(fuel.moisture=data) %>%
-    #nest_legacy(.key = "fuel.moisture") %>%
-    #mutate(fuel.moisture = purrr::map(fuel.moisture, as.list)) %>%
-    #mutate(fuel.moisture = fuel.moisture %>% map(~ {.x %>% as.list() %>% map(as.list) })) %>%
-    rename('relative-humidity'=relative.humidity, 'wind-from-direction'=wind.from.direction, 'wind-speed-20ft'=wind.speed.20ft, 'foliar-moisture'=foliar.moisture, 'fuel-moisture'=fuel.moisture) %>%
-    arrange(date) %>%
-    ungroup() %>%
-  dplyr::select(-huc12, -date) %>%
-  jsonlite::toJSON(pretty = TRUE, auto_unbox = TRUE)
-  
-)
-```
-
-# NOTE TO SELF
-Try table with fuel hour names and set key with other names.
 **THE END**
