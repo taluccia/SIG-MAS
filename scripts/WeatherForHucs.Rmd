@@ -31,6 +31,12 @@ herbaceous
 woody
 
 
+HUCs per region
+
+Central Coast Region [435], 
+North Coast Region [774], 
+Sierra Nevada Region [1148], 
+South Coast Region [480]
 
 # Global options
 prevent scientific notation; use =0 to reset
@@ -50,8 +56,9 @@ library('jsonlite')
 ## CSV weather data
 output from GEE
 ```{r}
-list <- list.files(path="../data/weather/timestep3544/nc", pattern='csv$', full.names = TRUE)
+list <- list.files(path="../data/weather/timestep2534/cc", pattern='csv$', full.names = TRUE)
 ```
+
 ```{r}
 list
 ```
@@ -98,7 +105,9 @@ orgDf2 <- function(x){
 }
 
 ```
+
 ## Apply  functions
+
 ```{r}
 list %>% combineCsv() %>% orgDf() # for sample size
 ```
@@ -126,7 +135,7 @@ x %>% arrange(date) %>%
     ungroup() %>%
   dplyr::select(-huc12, -date) %>%
   jsonlite::toJSON(pretty = TRUE, auto_unbox = TRUE) %>%
-  write(., paste("../outputs/jsonHuc/ts2039/nc/",huc12,'_2039.json'))
+  write(., paste("../outputs/WeatherJsonHuc/ts2034CC/",huc12,'_2034.json'))
   
 }
 ```
@@ -134,8 +143,11 @@ x %>% arrange(date) %>%
 ```{r}
 dflist %>% map_dfr(~ .x %>% jsonFun())
 ```
-For SC Use values from 180701070002 for Huc 180701070003
-For cc use values from 180600020804 for Huc 180600150305
+**NOTES:**
+
+*Missing HUC due to centroid placement over water*
+* For SC Use values from 180701070002 for Huc 180701070003
+* For cc use values from 180600020804 for Huc 180600150305
 
 
 **THE END**

@@ -5,59 +5,97 @@ date: "11/28/2023"
 output: html_document
 ---
 
+Central Coast Region [435], 
+North Coast Region [774], 
+Sierra Nevada Region [1148], 
+
+South Coast Region [480]
+
 ```{r}
 library(tidyverse)
-library(vetr)
 ```
 
 
 
 ```{r}
-t24 = read.table(text = list.files(path="../outputs/jsonHuc/ts2024/sc",pattern='json$',
+t24 = read.table(text = list.files(path="../outputs/WeatherJsonHuc/ts2024CC/",pattern='json$',
                              include.dirs= FALSE,
                              full.names=TRUE),
            sep = "/")
 ```
 
 ```{r}
-t29 = read.table(text = list.files(path="../outputs/jsonHuc/ts2029/sc",pattern='json$',
+t29 = read.table(text = list.files(path="../outputs/WeatherJsonHuc/ts2029CC/",pattern='json$',
                              include.dirs= FALSE,
                              full.names=TRUE),
            sep = "/")
 ```
 
+```{r}
+t34 = read.table(text = list.files(path="../outputs/WeatherJsonHuc/ts2034CC/",pattern='json$',
+                             include.dirs= FALSE,
+                             full.names=TRUE),
+           sep = "/")
+```
+
+```{r}
+t39 = read.table(text = list.files(path="../outputs/WeatherJsonHuc/ts2039CC/",pattern='json$',
+                             include.dirs= FALSE,
+                             full.names=TRUE),
+           sep = "/")
+```
+
+# Check row numbers
 ```{r}
 t24 
-```
-
-```{r}
 t29
+t34
+t39
 ```
+* SC 
+  + 2024 480
+  + 2029 480
+  + 2034 480
+  + 2039 480
+* CC
+  + 2024 435
+  + 2029 435
+  + 2034 435
+  + 2039 435
+* NC
+  + 2024 774
+  + 2029 774
+  + 2034 774
+  + 2039 774
+* SN 
+  + 2024 1148
+  + 2029 1148
+  + 2034 1148
+  + 2039 1148
 
 
+# Check differences
+
+## split HUC id into separate column
+
 ```{r}
-t24A = t24 %>% separate_wider_delim(V6, "_", names = c("A", "B")) %>% dplyr::select(A) 
+t24A = t24 %>% separate_wider_delim(V6, "_", names = c("A", "B"))
+t29A = t29 %>% separate_wider_delim(V6, "_", names = c("A", "B"))
+t34A = t34 %>% separate_wider_delim(V6, "_", names = c("A", "B"))
+t39A = t39 %>% separate_wider_delim(V6, "_", names = c("A", "B"))
 ```
 
 ```{r}
-( t29A = t29 %>% separate_wider_delim(V6, "_", names = c("A", "B")) %>% dplyr::select(A) )
+setdiff( t24A$A, t39A$A)
 ```
+**NOTES:**
+*Missing HUC due to centroid placement over water*
+* For SC Use values from 180701070002 for Huc 180701070003
+* For cc use values from 180600020804 for Huc 180600150305
 
 
+# Check Duplicates
 ```{r}
-vetr::alike(t24A, t29A)
-```
-```{r}
-huclist24 <- list.files(path="../outputs/j01m03_3/",pattern='tif$', full.names = TRUE)
-```
-
-```{r}
-tiflist
-```
-
-```{r}
-huclist29 <- list.files(path="../outputs/WSA/Batch5",pattern='tif$', full.names = TRUE)
-```
-```{r}
-setdiff(tools::file_path_sans_ext(basename(hdflist)), tools::file_path_sans_ext(basename(tiflist)))
+t39A[t39A$A > 1,]
+#tells you which ids occurred more than once.
 ```
