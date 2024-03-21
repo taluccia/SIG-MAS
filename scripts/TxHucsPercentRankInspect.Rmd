@@ -37,32 +37,163 @@ hucs %>%
             minWuiRank = min(WuiRank),
             maxWuiRank = max(WuiRank),)
 ```
-
+# SC first 2 last 2 hucs
 ```{r}
-hucs %>% filter(RRK_Rgn=="South Coast Region") %>% filter(BpRank %in% c(1,2, 479, 480)) %>% select(huc12)
-```
-
-180701020106 
-180701020303 
-181002010703 
-181002020304
-
-```{r}
-
-
+( scFire = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="South Coast Region") %>% 
+  filter(BpRank %in% c(1,2, 479, 480)) %>% 
+  select(huc12, TxBpPrc) %>% 
+  mutate(region="SC", 
+         priority="fire") %>%
+  rename(group=TxBpPrc)
+)
 ```
 
 ```{r}
-cc %>% 
-  st_drop_geometry(.) %>%
-  dplyr::select(BpMean:RRK_Region, WIPGeoNam:areasqkm, huc12, name, states:sumsqkm) %>%
-  mutate(across(c(BpMean, BpPrct, PropTreat, PropWui, WuiPrct, sum, sumsqkm), round, 3)) %>%
-  summarize(minBpPrct = min(BpPrct),
-            maxBpPrct = max(BpPrct),
-            minWuiPrct = min(WuiPrct),
-            maxWuiPrct = max(WuiPrct),
-            minBpRank = min(BpRank),
-            maxBpRank = max(BpRank),
-            minWuiRank = min(WuiRank),
-            maxWuiRank = max(WuiRank),)
+(scWui = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="South Coast Region") %>% 
+  filter(WuiRank %in% c(1,2, 479, 480)) %>% 
+  select(huc12, TxWPrct) %>% 
+  mutate(region="SC", 
+         priority="wui") %>%
+  rename(group=TxWPrct)
+)
+```
+
+```{r}
+(scHybrid = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="South Coast Region") %>% 
+  filter(rffcRnk %in% c(1,2, 479, 480)) %>% 
+  select(huc12, TxRffcP) %>% 
+  mutate(region="SC", 
+         priority="hybrid") %>%
+  rename(group=TxRffcP)
+)
+```
+```{r}
+( sc = bind_rows(scFire, scWui, scHybrid) )
+```
+
+# CC first 2 last 2 hucs
+
+```{r}
+( ccFire = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="Central Coast Region") %>% 
+  filter(BpRank %in% c(1,2, 434, 435)) %>% 
+  select(huc12, TxBpPrc) %>% 
+  mutate(region="CC", 
+         priority="fire") %>%
+  rename(group=TxBpPrc)
+)
+```
+
+```{r}
+(ccWui = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="Central Coast Region") %>% 
+  filter(WuiRank %in% c(1,2, 434, 435)) %>% 
+  select(huc12, TxWPrct) %>% 
+  mutate(region="CC", 
+         priority="wui") %>%
+  rename(group=TxWPrct)
+)
+```
+
+```{r}
+(ccHybrid = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="Central Coast Region") %>% 
+  filter(rffcRnk %in% c(1,2, 434, 435)) %>% 
+  select(huc12, TxRffcP) %>% 
+  mutate(region="CC", 
+         priority="hybrid") %>%
+  rename(group=TxRffcP)
+)
+```
+```{r}
+( cc = bind_rows(ccFire, ccWui, ccHybrid) )
+```
+
+# NC first 2 last 2 hucs
+
+```{r}
+( ncFire = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="North Coast Region") %>% 
+  filter(BpRank %in% c(1,2, 773, 774)) %>% 
+  select(huc12, TxBpPrc) %>% 
+  mutate(region="NC", 
+         priority="fire") %>%
+  rename(group=TxBpPrc)
+)
+```
+
+```{r}
+(ncWui = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="North Coast Region") %>% 
+  filter(WuiRank %in% c(1,2, 773, 774)) %>% 
+  select(huc12, TxWPrct) %>% 
+  mutate(region="NC", 
+         priority="wui") %>%
+  rename(group=TxWPrct)
+)
+```
+
+```{r}
+(ncHybrid = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="North Coast Region") %>% 
+  filter(rffcRnk %in% c(1,2, 773, 774)) %>% 
+  select(huc12, TxRffcP) %>% 
+  mutate(region="NC", 
+         priority="hybrid") %>%
+  rename(group=TxRffcP)
+)
+```
+```{r}
+( nc = bind_rows(ncFire, ncWui, ncHybrid) )
+```
+
+
+# SN first 2 last 2 hucs
+
+```{r}
+( snFire = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="Sierra Nevada Region") %>% 
+  filter(BpRank %in% c(1,2, 1147, 1148)) %>% 
+  select(huc12, TxBpPrc) %>% 
+  mutate(region="SN", 
+         priority="fire") %>%
+  rename(group=TxBpPrc)
+)
+```
+
+```{r}
+(snWui = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="Sierra Nevada Region") %>% 
+  filter(WuiRank %in% c(1,2, 1147, 1148)) %>% 
+  select(huc12, TxWPrct) %>% 
+  mutate(region="SN", 
+         priority="wui") %>%
+  rename(group=TxWPrct)
+)
+```
+
+```{r}
+(snHybrid = hucs %>% st_drop_geometry() %>% 
+  filter(RRK_Rgn=="Sierra Nevada Region") %>% 
+  filter(rffcRnk %in% c(1,2, 1147, 1148)) %>% 
+  select(huc12, TxRffcP) %>% 
+  mutate(region="SN", 
+         priority="hybrid") %>%
+  rename(group=TxRffcP)
+)
+```
+```{r}
+( sn = bind_rows(snFire, snWui, snHybrid) )
+```
+
+
+```{r}
+( combineSelectHucs = bind_rows(sc, cc, nc, sn) )
+```
+
+```{r}
+write.csv(combineSelectHucs, "../outputs/TxHucsSelectForQaqc.csv", row.names=FALSE)
 ```

@@ -4,7 +4,7 @@
 
 This repo contains scripts for pre and post processing of HUC data for the MAS project.
 
-Pre processing takes original HUC data downloaded from the [USGS](https://apps.nationalmap.gov/downloader/) using a polygon that extended beyond the California Border. HUCs were then select by joining with RRK shapefile and  WIP shapefile, using the greatest overlap. 
+Pre processing takes original HUC data downloaded from the [USGS](https://apps.nationalmap.gov/downloader/) using a polygon that extended beyond the California Border. HUCs were then select by joining with RRK shapefile and included if 50% of the HUC overlaps with the RRK Region Boundary. 
 
 The HUC shapefile is then fed into EE to identify HUCs with 10% treatable area and calculate the burn probability and percent WUI per HUC. In EE each HUC is then ranked by burn probability and percent WUI. These HUCs are then exported from EE to receive addition processing R.
 
@@ -76,5 +76,19 @@ Available in `projects/pyregence-ee/assets/mas/`
 
 * `TxHucNumbers.Rmd`  --shp takes EE output and recombines separate RRK Regions into single shp. Adds properties for grouped percentiles, adds rank and percent rank for RFFC, which is calculated by multiplying the BP percent rank by the WUI percent WUI.   
 
-
+# Spatial Data Downloads
 Road File from https://www.census.gov/cgi-bin/geo/shapefiles/index.php?year=2016&layergroup=Roads
+
+# NOTES:
+
+## Weather
+Central Coast Region [435], 
+North Coast Region [774], 
+Sierra Nevada Region [1148], 
+South Coast Region [480]
+
+Timesteps 0y and 5y: 2015-2024 (June-Oct)
+Timestep 10y: 2025-2034 (June-Oct)
+Timestep 20y: 2035-2044 (June-Oct)
+
+

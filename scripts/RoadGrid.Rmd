@@ -94,6 +94,10 @@ scGridRd <- st_make_grid(sc, square = T, cellsize = c(636.1494, 636.1494))%>%
 ```
 
 ```{r}
+sqrt(404686)
+```
+
+```{r}
 length(unique(scGridRd$ID))
 ```
 ```{r}
