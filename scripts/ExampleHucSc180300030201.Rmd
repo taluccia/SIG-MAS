@@ -1,0 +1,131 @@
+---
+title: "Example Huc Sc 180300030201"
+author: "Anna Talucci"
+date: "3/16/2024"
+output: html_document
+---
+
+# Overview
+
+example HUC
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+library(RColorBrewer)
+library(scales)
+library(terra)
+library(ggnewscale)
+library(cowplot)
+library(tidyterra)
+library(ggspatial)
+```
+
+```{r}
+hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
+
+```{r}
+hucs
+```
+
+```{r}
+sample = hucs %>% filter(huc12==180300030201)
+```
+Wui time step 1
+Fire time step 1
+Hybrid time step 2
+
+## Rasters
+
+### Fuel model Layer
+```{r}
+wui500trt1fml = rast('../data/huc_180300030201/fuels/RunID19_SC_WUI_500k_trt1/2024/fml.tif')
+```
+
+### Canopy
+```{r}
+wui500trt1cht = rast('../data/huc_180300030201/fuels/RunID19_SC_WUI_500k_trt1/2024/cht.tif')
+```
+
+### Canopy closure
+```{r}
+wui500trt1cc = rast('../data/huc_180300030201/fuels/RunID19_SC_WUI_500k_trt1/2024/cc.tif')
+```
+
+### Canopy base height
+```{r}
+wui500trt1cbh = rast('../data/huc_180300030201/fuels/RunID19_SC_WUI_500k_trt1/2024/cbh.tif')
+```
+
+### Canopy 
+```{r}
+wui500trt1cbd = rast('../data/huc_180300030201/fuels/RunID19_SC_WUI_500k_trt1/2024/cbd.tif')
+```
+
+# Basic plots
+
+## FML
+```{r}
+plot(wui500trt1fml)
+```
+
+```{r}
+plot(wui500trt1fml, type="interval")
+```
+
+## CBH
+```{r}
+plot(wui500trt1cbh)
+```
+
+```{r}
+plot(wui500trt1cbh, type="interval")
+```
+
+
+# Figures
+
+## CBH
+```{r}
+names(wui500trt1cbh)
+```
+```{r}
+AlbPalette <- c('#543005','#8c510a','#bf812d','#dfc27d','#f6e8c3','#f5f5f5','#c7eae5','#80cdc1','#35978f','#01665e','#003c30')
+```
+ scale_fill_gradientn(colours=AlbPalette,limits=c(-.017,.017), breaks=c(-0.015, -0.008,  0.000,  0.008,  0.015),  na.value = "transparent") +
+```{r}
+ggplot() +  
+  layer_spatial(wui500trt1cbh) +
+  scale_fill_gradientn(colours=AlbPalette, na.value = "transparent") +
+   
+  #geom_tile(data = , aes(fill = "cbh")) +
+  geom_sf(data=sample, fill=NA,color='#88419d', size=2)+
+  coord_sf() #+
+  #scale_fill_hypso_c()
+
+
+```
+
+```{r}
+my_breaks <- c(0, 50, 100, 150, 200)
+pal <- c('#ffffcc','#c2e699','#78c679','#238443')
+
+scale_fill_fermenter_custom <- function(pal, na.value = "grey50", guide = "coloursteps", aesthetics = "fill", ...) {
+  binned_scale("fill", "fermenter", ggplot2:::binned_pal(scales::manual_pal(unname(pal))), na.value = na.value, guide = guide, ...)  
+}
+
+
+ggplot() +
+  geom_sf(data=ca, fill="cornsilk3", colour="cornsilk3", alpha=.75) +
+  
+  new_scale_fill() +
+    geom_sf(data=vegshp, aes(fill = propSW), lwd = 0)+
+   scale_fill_fermenter_custom(pal) +
+  coord_sf()+
+  theme_minimal() + ggtitle("Proportion Softwood") +
+  theme(legend.position = "none", legend.title=element_blank())
+
+
+```
