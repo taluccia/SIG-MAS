@@ -25,7 +25,7 @@ library(tidyr)
 ```
 
 
-# Data
+# HUC Data
 ```{r}
 huc = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
 ```
@@ -41,47 +41,98 @@ huc
 ```{r}
 unique(huc$RRK_Rgn)
 ```
+
 ```{r}
-( hucIdOrgin = huc %>% 
-  st_drop_geometry() %>% 
-  dplyr::select(huc12, RRK_Rgn) %>% 
-  rename(HUC12=huc12) %>% 
-  mutate(RRK = ifelse(RRK_Rgn == "Sierra Nevada Region", "SN",
-                         ifelse(RRK_Rgn == "North Coast Region" , "NC",
-                                ifelse(RRK_Rgn == "South Coast Region" , "SC", "CC")))) )
+unique(huc$Priorty)
 ```
 
 ```{r}
-( snOrg = hucIdOrgin %>% filter(RRK=="SN") )
-( ncOrg = hucIdOrgin %>% filter(RRK=="NC") )
-( scOrg = hucIdOrgin %>% filter(RRK=="SC") )
-( ccOrg = hucIdOrgin %>% filter(RRK=="CC") )
+unique(huc$TxWPrct)
 ```
 
-## List of csv files
+## Rename and additions to HUC data
 
 ```{r}
-listRuns <- list.files(path="../data/FvsProcessedOutput/",pattern='csv$', full.names = TRUE)
+( hucsClean = huc %>%  
+  rename(wuiGroup = TxWPrct, fireGroup = TxBpPrc, hybridGroup = TxRffcP, regionName = RRK_Rgn, hybridPrty=Priorty, hybridVal=rffc, hybridRnk=rffcRnk, hybridPrct =rffcPrc)) %>% 
+  mutate(region = ifelse(regionName == "Sierra Nevada Region", "SN",
+                ifelse(regionName == "North Coast Region" , "NC",
+              ifelse(regionName == "South Coast Region" , "SC", "CC")))) %>%
+    mutate(timeWui= ifelse(wuiGroup == 25, "yr1to5_16to20",
+                    ifelse(wuiGroup == 50 , "yr6to10",
+                    ifelse(wuiGroup == 75 , "yr11to15", "notTreated")))) %>%
+    mutate(timeFire = ifelse(fireGroup == 25, "yr1to5",
+                      ifelse(fireGroup == 50 , "yr6to10",
+                      ifelse(fireGroup == 75 , "yr11to15", "yr16to20")))) %>% 
+    mutate(timeHybrid = ifelse(hybridGroup == 25, "yr1to5",
+                    ifelse(hybridGroup == 50 , "yr6to10",
+                     ifelse(hybridGroup == 75 , "yr11to15", "yr16to20")))) %>%
+  dplyr::select(huc12, ObjctID, BpMean:BpRank, PropTrt:regionName,  WuiPrct:states, TxArea:wuiGroup, fireGroup, hybridVal:hybridGroup, region:timeHybrid, geometry)
 ```
 
-```{r include=FALSE}
-listRuns
+
+
+
+# Write 
+```{r eval=FALSE, include=FALSE}
+st_write(hucClean, "../outputs/boundaries/hucsShp/TxHucsTimingGroups.shp", driver="ESRI Shapefile")
+```
+
+```{r}
+unique(hucsClean$regionName)
+unique(hucsClean$region)
+```
+
+## Subset by region
+
+```{r}
+( snOrg = hucClean %>% st_drop_geometry() %>% filter(regionName=="Sierra Nevada Region") )
+( ncOrg = hucClean %>% st_drop_geometry() %>% filter(regionName=="North Coast Region") )
+( scOrg = hucClean %>% st_drop_geometry() %>% filter(regionName=="South Coast Region") )
+( ccOrg = hucClean %>% st_drop_geometry() %>% filter(regionName== "Central Coast Region") )
 ```
 
 
+
+
+# FVS Processed output Data
+List of csv files
+
+```{r}
+listCC <- list.files(path="../data/FVS/processed_output/CC/",pattern='csv$', full.names = TRUE)
+
+listSC <- list.files(path="../data/FVS/processed_output/SC/",pattern='csv$', full.names = TRUE)
+
+listSN <- list.files(path="../data/FVS/processed_output/SN/",pattern='csv$', full.names = TRUE)
+```
+
+```{r}
+listCC
+```
+
+```{r}
+listSC
+```
+
+```{r}
+listSN
+```
 
 ### Name items in a list with file name
 ```{r}
-names(listRuns) <- tools::file_path_sans_ext(basename(listRuns))
+names(listCC) <- tools::file_path_sans_ext(basename(listCC))
+names(listSC) <- tools::file_path_sans_ext(basename(listSC))
+names(listSN) <- tools::file_path_sans_ext(basename(listSN))
 ```
 
-```{r include=FALSE}
-listRuns
-```
+
 
 ```{r}
-listRuns[1] %>%read.csv()
+listCC[1] %>% read.csv()
+listSC[1] %>% read.csv()
+listSN[1] %>% read.csv()
 ```
+
 # Functions
 
 Organize dataframe with file name information
@@ -97,20 +148,39 @@ part1 <- function(list){
 
 # Apply function to list
 ```{r}
-fvs = part1(listRuns)
+fvs_cc = part1(listCC)
+fvs_sc = part1(listSC)
+fvs_sn = part1(listSN)
 ```
 
 
 ```{r}
-fvs
+fvs_cc
+fvs_sc
+fvs_sn
 ```
 
 ```{r}
-unique(fvs$TxType)
-unique(fvs$TxIntensity)
-unique(fvs$Priority)
-unique(fvs$run)
+unique(fvs_cc$TxType)
+unique(fvs_cc$TxIntensity)
+unique(fvs_cc$Priority)
+unique(fvs_cc$run)
 ```
+
+```{r}
+unique(fvs_sc$TxType)
+unique(fvs_sc$TxIntensity)
+unique(fvs_sc$Priority)
+unique(fvs_sc$run)
+```
+
+```{r}
+unique(fvs_sn$TxType)
+unique(fvs_sn$TxIntensity)
+unique(fvs_sn$Priority)
+unique(fvs_sn$run)
+```
+
 # Check data
 
 ```{r}
@@ -320,13 +390,22 @@ targetNC = c("180201041006", "180201160310", "180500020802")
 dataFvs %>% group_by(RRK) %>% 
   summarise(n = n_distinct(HUC12))
 ```
-# Replace RFFC with Hybrid
+
+# Column updates for Datacube
+
+* Replace RFFC with Hybrid
+* add time step column for per
 ```{r}
 unique(dataFvs$Priority)
 ```
+
 ```{r}
 dataFvs1 = dataFvs %>% 
-  mutate(Priority = str_replace(Priority, 'RFFC', 'Hybrid')) 
+  mutate(Priority = str_replace(Priority, 'RFFC', 'Hybrid')) %>%
+  mutate(gradebook, letter = ifelse(grade %in% 60:69, "D",
+                                     ifelse(grade %in% 70:79, "C",
+                                            ifelse(grade %in% 80:89, "B",
+                                                   ifelse(grade %in% 90:99, "A", "F")))))
 ```
 
 ```{r}
