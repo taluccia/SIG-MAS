@@ -1,0 +1,161 @@
+---
+title: "FVS Summary"
+author: "Anna Talucci"
+date: "3/21/2024"
+output: html_document
+---
+
+HUC12	Region	group	priority
+180701020701	SC	50	fire
+180702030506	SC	50	fire
+180703020504	SC	75	fire
+180701010104	SC	75	fire
+181002041506	SC	50	wui
+180703010402	SC	50	wui
+180703030103	SC	75	wui
+180600140201	SC	75	wui
+181002030401	SC	50	hybrid
+180703030502	SC	50	hybrid
+180703030101	SC	75	hybrid
+180600130106	SC	75	hybrid
+180701020106	SC	25	fire
+180701020303	SC	25	fire
+181002010703	SC	100	fire
+181002020304	SC	100	fire
+180702020303	SC	25	wui
+180701030104	SC	25	wui
+180703020301	SC	100	wui
+180300031401	SC	100	wui
+180701020107	SC	25	hybrid
+180702030605	SC	25	hybrid
+180703010403	SC	100	hybrid
+181002030501	SC	100	hybrid
+
+# Global options
+Prevent scientific notation for number values; use =0 to reset
+```{r}
+options(scipen=999)
+```
+
+
+# Overview
+HUC Treatment timing
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+library(RColorBrewer)
+library(scales)
+library(ggnewscale)
+library(cowplot)
+
+```
+
+
+# Data
+
+```{r}
+vegtype = read.csv("../data/vegType/AllHucsHerbShrubHardSoft.csv")
+```
+
+```{r}
+fvs = read_csv("../data/FVS/FVSprocessedOutputsHucsScCcSn.csv")
+```
+```{r}
+fvs
+```
+
+```{r}
+unique(fvs$Priority)
+```
+```{r}
+( timingGroups = fvs %>% dplyr::select(huc12, region, regionName, timeWui, timeFire, timeHybrid) )
+```
+# Veg type proportion by HUC
+```{r}
+(vegtype = allHucs %>% 
+   dplyr::select(huc12, RRK_Region, hardwoodSum, 
+herbSum, shrubSum, softwoodSum, vegSum) %>%
+  mutate(Herb = herbSum/vegSum,
+         Shrub = shrubSum/vegSum,
+         Hardwood = hardwoodSum/vegSum,
+         Softwood = softwoodSum/vegSum) %>%
+  dplyr::select(huc12, RRK_Region, Herb:Softwood) %>%
+  rename(regionName=RRK_Region) %>%
+  pivot_longer(!c(huc12, regionName), names_to = "vegType", values_to = "Proportion")
+
+)
+```
+
+## add timing
+```{r}
+( vegtype1 = full_join(vegtype, timingGroups, by=c("huc12", "regionName") ) )
+```
+
+# Fire 
+```{r}
+targetFire = c('180701020701',
+'180702030506',	
+'180703020504',	
+'180701010104',
+'180701020106',	
+'180701020303',	
+'181002010703',	
+'181002020304')
+```
+
+```{r}
+(fireHucs = fvs %>% 
+   filter(huc12 %in% targetFire) %>% 
+   filter(Priority=="Fire") %>% 
+   mutate(timeFire = fct_relevel(timeFire, "yr1to5", "yr6to10", "yr11to15", "yr16to20")) %>%
+   mutate(Intensity = fct_relevel(Intensity, "500k", "1m", "2m"))
+
+)
+```
+
+# Plot Fire priority TSC
+['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026']
+```{r}
+( timeseriesSCFire = fireHucs %>% 
+  group_by(Intensity, TxType) %>%
+  ggplot(., aes(x=Year, y=TSC, group=as.character(huc12), color=timeFire)) +
+  geom_point() + 
+  geom_line() + 
+  facet_grid(TxType ~ Intensity) +
+  scale_color_manual( values = c('#bd0026', '#f03b20','#fd8d3c','#fecc5c'), name="Tx timing") +
+  theme_bw()  #+
+#guides(color=guide_legend(title="Tx year 1-5"))
+)
+```
+#### save tx timing
+```{r}
+ggsave("../figures/scFireTxTiming.png", plot=timeseriesSCFire, dpi=600, bg="white")
+```
+
+## Veg bar plot
+```{r}
+
+(vegtypefireHucs = vegtype1 %>% 
+   filter(huc12 %in% targetFire) %>% 
+   mutate(timeFire = fct_relevel(timeFire, "yr1to5", "yr6to10", "yr11to15", "yr16to20")) %>%
+   distinct(.keep_all = TRUE) %>%
+   mutate(x = paste(huc12, " ", timeFire)) 
+
+)
+
+```
+
+````{r}
+( scFireHucs = ggplot(vegtypefireHucs, aes(x=vegType, y=Proportion)) +
+    geom_bar(stat="identity") +
+    facet_wrap(~x, ncol=2) +
+    theme_bw() +
+    labs(x="")
+)
+```
+#### save veg bar plot
+```{r}
+ggsave("../figures/scFireHucsPropVegType.png", plot=scFireHucs, width = 5, height = 6, units = "in", dpi=600, bg="white")
+```

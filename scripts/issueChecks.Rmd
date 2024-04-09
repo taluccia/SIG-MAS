@@ -1,0 +1,49 @@
+---
+title: "Issues"
+author: "Anna Talucci"
+date: "4/2/2024"
+output: html_document
+---
+
+
+# Overview
+
+Check various issues
+
+Prevent scientific notation for number values; use =0 to reset
+```{r}
+options(scipen=999)
+```
+
+# Library
+```{r}
+library(tidyverse)
+library(sf)
+library(vroom)
+library(tidyr)
+```
+
+# 04-02-2024 Nic question about high priority hucs
+"180902080401"
+"180902060901"
+
+
+## HUC Data
+```{r}
+allHucsPrctRankWIP.shp
+```
+
+```{r}
+huc = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+```
+```{r}
+huc%>% filter(huc12 %in% c("180902080401", "180902060901"))
+```
+
+
+
+
+
+
+
+
