@@ -3,6 +3,14 @@ title: "Veg Treatment Types"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
 # Overview
 
 This script is filtering treatable vegetation types and printing those values as a list for each RRK that is copied and pasted into EE script.

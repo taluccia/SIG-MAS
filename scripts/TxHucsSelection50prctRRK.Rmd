@@ -3,7 +3,13 @@ title: "Select Hucs with 50% overlap"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
 # Overview
+
+Select HUC that have at least 50% overlap with CA state boundary and RRK Boundaries. 
 
 # Packages
 ```{r}
@@ -12,32 +18,40 @@ library(sf)
 ```
 
 # Data
+
 ## RRK
+
 ```{r}
-rrk = st_read("../data/RRK/RRK_boundaries3.shp", "RRK_boundaries3")
+rrk = st_read("../data/RawShapefileData/RRK/RRK_boundaries3.shp", "RRK_boundaries3")
 ```
 
 ## HUC12
+
 ```{r}
-hucs = st_read("../data/USGS_HUC12/AllHucs.shp", "AllHucs")
+hucs = st_read("../data/RawShapefileData/USGS_HUC12/AllHucs.shp", "AllHucs")
 ```
 
-
 ## States
+
 ```{r}
-states = st_read("../data/State_boundaries/tl_2022_us_state.shp", "tl_2022_us_state")
+states = st_read("../data/RawShapefileData/State_boundaries/tl_2022_us_state.shp", "tl_2022_us_state")
 ```
 
 ## WIP
+
 ```{r}
-wip = st_read("../data/WIP_Regions/WIP_Regions.shp", "WIP_Regions")
+wip = st_read("../data/RawShapefileData/WIPData/WIP_Regions/WIP_Regions.shp", "WIP_Regions")
 ```
 # SN
+
 ```{r}
-sn = st_read("../data/sn/SN.shp", "SN")
+sn = st_read("../data/spatialDataCreateShp/sn/SN.shp", "SN")
 ```
 
+
+
 # Select States
+
 ```{r}
 (
   states_aoi = states %>% filter(NAME %in% c("California", "Oregon", "Nevada", "Arizona"))
@@ -45,6 +59,7 @@ sn = st_read("../data/sn/SN.shp", "SN")
 ```
 
 # Define projection
+
 ```{r}
 projection = st_crs(rrk)
 ```
@@ -63,6 +78,27 @@ states_ab = st_transform(states_aoi, projection)
 ```{r}
 wip_ab = st_transform(wip, projection)
 ```
+
+
+# Map
+```{r}
+twohucCheck = hucs_ab %>% filter(huc12 %in% c(180902080401, 180902060901))
+```
+
+```{r}
+twohucCheck
+rrk
+```
+
+```{r}
+
+ggplot() +
+    geom_sf(data = rrk, aes(fill = RRK_Region)) +
+  geom_sf(data = twohucCheck, fill="red") +
+  scale_fill_manual(values = c('#b3e2cd','#fdcdac','#cbd5e8','#f4cae4','#e6f5c9','#fff2ae'))
+
+```
+
 
 # Calculate Huc Area
 as.numeric(round(st_area(fires_ea),1))) %>% 
@@ -84,6 +120,7 @@ st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) 4473
 ```{r}
 ( joinHucstate = st_join(st_make_valid(hucs_ab), st_make_valid(states_ab), largest=TRUE))
 ```
+
 # Remove HUCs not assigned to California
 ```{r}
 (
@@ -92,14 +129,16 @@ st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) 4473
 ```
 
 ## Join HUC with RRK
+
 ```{r}
 ( joinHucRrk = st_join(caHucs, rrk, largest=TRUE))
 ```
 
 
 ```{r}
-
+joinHucRrk %>% filter(huc12 %in% c(180902080401, 180902060901))
 ```
+
 ## Join WIPS to HUCs
 ```{r}
 ( joinHucRrkWip = st_join(joinHucRrk, wip_ab, largest=TRUE) )

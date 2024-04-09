@@ -5,6 +5,13 @@ date: "9/18/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
 
 # Overview
 Calculate proportion of road grid area by percentile groups

@@ -3,6 +3,14 @@ title: "RRK Summary Area for Herb Shrub Tree"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
 # Overview
 This script takes the CSV output from EE and calculates the percent treatable herb, shrub, hardwood, and softwood by RRK.
 

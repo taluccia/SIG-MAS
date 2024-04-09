@@ -5,7 +5,16 @@ date: "8/23/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
 # Overview
+
 This scripts calculates treatment areas for the South Coast (SC) and Central Coast (CC) based on treatable area within road grids and softwood outside of the road grid. The road grid is a fish net of grid cells that are 100 acres by 100 acres, that were subset to include any grid cell that overlapped a road.
 
 Additionally, the code calculates the softwood area both within and outside the grid as well as the the other treatable area within the grid that is not softwood.
@@ -13,6 +22,7 @@ Additionally, the code calculates the softwood area both within and outside the 
 Summary of TX area 
 -- for softwood outside grid and treatable area within the grid
 -- all softwood and then other
+
 # Packages
 ```{r}
 library(tidyverse)

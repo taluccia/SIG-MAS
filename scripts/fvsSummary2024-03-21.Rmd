@@ -4,6 +4,20 @@ author: "Anna Talucci"
 date: "3/21/2024"
 output: html_document
 ---
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
+# Overview
+
+HUC Treatment timing
+
+
+Sample HUCS for graphing
 
 HUC12	Region	group	priority
 180701020701	SC	50	fire
@@ -31,17 +45,8 @@ HUC12	Region	group	priority
 180703010403	SC	100	hybrid
 181002030501	SC	100	hybrid
 
-# Global options
-Prevent scientific notation for number values; use =0 to reset
-```{r}
-options(scipen=999)
-```
-
-
-# Overview
-HUC Treatment timing
-
 # Packages
+
 ```{r}
 library(tidyverse)
 library(sf)
@@ -49,7 +54,6 @@ library(RColorBrewer)
 library(scales)
 library(ggnewscale)
 library(cowplot)
-
 ```
 
 

@@ -5,17 +5,30 @@ date: "11/28/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
+# Overview
+
+Compare Hucs across weather data
+
 Central Coast Region [435], 
 North Coast Region [774], 
 Sierra Nevada Region [1148], 
-
 South Coast Region [480]
+
+# Library 
 
 ```{r}
 library(tidyverse)
 ```
 
-
+# Data
 
 ```{r}
 t24 = read.table(text = list.files(path="../outputs/WeatherJsonHuc/ts2024CC/",pattern='json$',

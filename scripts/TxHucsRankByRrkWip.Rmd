@@ -3,6 +3,14 @@ title: "Redo ranks by WIP for SN"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
 # Overview
 Calculate check for min max of percent rank, error in calculation
 
