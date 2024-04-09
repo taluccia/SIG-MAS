@@ -5,6 +5,15 @@ date: "6/3/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+# Overview 
+
+Create final shapefile and attributes for Tx Hucs for 4 RRK regions.
+
+Add percentile groups for WUI, fire Risk, and RFFC (aka Hybrid)
 
 # Packages
 ```{r}
@@ -16,21 +25,21 @@ library(viridis)
 # Data
 ## Tx area
 ```{r}
-sn = read.csv("../data/TxArea/snHucTreat10WuiBpPrctRk_2023-06-04.csv")
-nc = read.csv("../data/TxArea/ncHucTreat10WuiBpPrctRk_2023-06-04.csv")
-cc = read.csv("../data/TxArea/ccHucTreat10WuiBpPrctRk_2023-06-04.csv")
-sc = read.csv("../data/TxArea/scHucTreat10WuiBpPrctRk_2023-06-04.csv")
+sn = read.csv("../data/TxCsvData/TxArea/snHucTreat10WuiBpPrctRk_2023-06-04.csv")
+nc = read.csv("../data/TxCsvData/TxArea/ncHucTreat10WuiBpPrctRk_2023-06-04.csv")
+cc = read.csv("../data/TxCsvData/TxArea/ccHucTreat10WuiBpPrctRk_2023-06-04.csv")
+sc = read.csv("../data/TxCsvData/TxArea/scHucTreat10WuiBpPrctRk_2023-06-04.csv")
 ```
 
 ## RFFC
 RFFC_Priorities_Top.shp
 ```{r}
-rffc = st_read("../data/PriorityRffc/RFFC_Priorities_Top.shp", "RFFC_Priorities_Top")
+rffc = st_read("../data/RawShapefileData/PriorityRffc/RFFC_Priorities_Top.shp", "RFFC_Priorities_Top")
 ```
 
 ## Hucs
 ```{r}
-huc = st_read("../data/TxHucs/allHucsPrctRankWIP.shp", "allHucsPrctRankWIP")
+huc = st_read("../data/spatialDataCreateShp/TxHucs/allHucsPrctRankWIP.shp", "allHucsPrctRankWIP")
 ```
 
 # rffc data
@@ -41,7 +50,13 @@ huc = st_read("../data/TxHucs/allHucsPrctRankWIP.shp", "allHucsPrctRankWIP")
     rename(huc12=HUC12)
 )
 ```
+```{r}
+rffc1 %>% filter(huc12 %in% c("180902080401", "180902060901"))
+```
 
+```{r}
+huc %>% filter(huc12 %in% c("180902080401", "180902060901"))
+```
 
 # Bind csv
 ```{r}
@@ -277,6 +292,7 @@ RffcTx %>%  filter(RRK_Region=="Central Coast Region") %>%
 ( RffcTx1 = RffcTx %>% dplyr::select(huc12:WuiRank, hucAc:states, WIP_Capaci:TxRadiiM, rffc:TxRffcPrctl, geometry) 
 )
 ```
+
 # Map
 
 ```{r}
@@ -293,6 +309,11 @@ without_boundary <-
     geom_sf(data = world1, mapping = aes(fill = ID), lwd = 0) +
   theme(legend.position = "none") +
   ggtitle("Without Country Boundaries")
+  
+```{r}
+RffcTx1 %>% filter(huc12 %in% c("180902080401", "180902060901"))
+```
+
 # Write to shapefile
 ```{r eval=FALSE, include=FALSE}
 st_write(allDataTx1, "../outputs/hucsShp/TxPrctRankRrkWip.shp", driver="ESRI Shapefile")
