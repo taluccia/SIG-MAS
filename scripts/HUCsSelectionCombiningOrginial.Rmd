@@ -7,6 +7,10 @@ output: html_document
 
 # Overview
 **NOTE SURE WHAT THIS WAS USED FOR??**
+
+Huc Selection for hucs with 50% in CA
+
+
 # Packages
 ```{r}
 library(tidyverse)
@@ -55,6 +59,9 @@ huc18
 )
 ```
 
+```{r}
+allHucs %>% filter(huc12 %in% c(180902080401, 180902060901))
+```
 # Write 
 ```{r}
 st_write(allHucs, "../outputs/AllHucs.shp", driver="ESRI Shapefile")

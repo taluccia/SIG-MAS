@@ -15,7 +15,7 @@ library(skimr)
 
 # Data
 ```{r}
-allHucs = read.csv("../data/vegType/AllHucsHST.csv")
+allHucs = read.csv("../data/vegType/AllHucsHerbShrubHardSoft.csv")
 ```
 2,944 rows
 ```{r}
@@ -33,6 +33,8 @@ tail(allHucs)
 unique(allHucs$RRK_Region)
 unique(allHucs$WIPGeoNam)
 ```
+
+
 
 
 # By HUC and RRK And WIP
