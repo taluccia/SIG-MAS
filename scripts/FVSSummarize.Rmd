@@ -5,24 +5,23 @@ date: "12/19/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
 
 # Overview
 Summary table for FVS Processed outputs by RRK
 
-# Global options
-prevent scientific notation; use =0 to reset
-```{r}
-options(scipen=999)
-```
 
 # Library
 ```{r}
 library(tidyverse)
-
 library(vroom)
-
 ```
-
 
 # Data
 

@@ -5,16 +5,18 @@ date: "12/2/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
 
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
 
 # Overview
+
 Takes outputs from FVS and clean the HUC12 level data so that the FVS output data csv file has been update for 2837 HUC12s across four RRK Regions (Central Coast Region [435], North Coast Region [774], Sierra Nevada Region [1148], South Coast Region [480]). Each HUC has output data for the combination of three Priorities, three Treatment Intensities, three treatments types, and four time steps, which results in a data table with 306,396 rows.
 
-# Global options
-Prevent scientific notation for number values; use =0 to reset
-```{r}
-options(scipen=999)
-```
 
 # Library
 ```{r}

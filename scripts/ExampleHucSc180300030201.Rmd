@@ -5,6 +5,10 @@ date: "3/16/2024"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
 # Overview
 
 example HUC

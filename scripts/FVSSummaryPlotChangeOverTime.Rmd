@@ -4,14 +4,18 @@ author: "Anna Talucci"
 date: "1/27/2024"
 output: html_document
 ---
+
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
 # Overview
 Create bar plot to showing percent change at year 20 compared to baseline across the 108 scenarios for Total Stand Carbon. 
 
-## Set global options
-Prevent scientific notation of numeric values; use =0 to reset
-```{r}
-options(scipen=999)
-```
 
 # Library
 ```{r}
