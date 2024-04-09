@@ -4,12 +4,13 @@ output: html_document
 ---
 
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
 
 # Overview
-**NOTE SURE WHAT THIS WAS USED FOR??**
 
-Huc Selection for hucs with 50% in CA
-
+Organize raw HUC data downloaded from USGS. The output feeds into TxHucsSeelction50prctRRK.Rmd
 
 # Packages
 ```{r}
@@ -19,18 +20,18 @@ library(sf)
 
 
 ```{r}
-huc15 = st_read("../data/USGS_HUC12/WBD_15/WBDHU12.shp", "WBDHU12")
+huc15 = st_read("../data/RawShapefileData/USGS_HUC12/WBD_15/WBDHU12.shp", "WBDHU12")
 ```
 ```{r}
-huc16 = st_read("../data/USGS_HUC12/WBD_16/WBDHU12.shp", "WBDHU12")
-```
-
-```{r}
-huc17 = st_read("../data/USGS_HUC12/WBD_17/WBDHU12.shp", "WBDHU12")
+huc16 = st_read("../data/RawShapefileData/USGS_HUC12/WBD_16/WBDHU12.shp", "WBDHU12")
 ```
 
 ```{r}
-huc18 = st_read("../data/USGS_HUC12/WBD_18/WBDHU12.shp", "WBDHU12")
+huc17 = st_read("../data/RawShapefileData/USGS_HUC12/WBD_17/WBDHU12.shp", "WBDHU12")
+```
+
+```{r}
+huc18 = st_read("../data/RawShapefileData/USGS_HUC12/WBD_18/WBDHU12.shp", "WBDHU12")
 ```
 
 ## View data

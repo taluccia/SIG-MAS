@@ -5,6 +5,11 @@ date: "3/10/2024"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+
 # Overview
 HUC Treatment timing
 

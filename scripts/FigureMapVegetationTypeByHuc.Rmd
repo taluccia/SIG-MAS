@@ -5,7 +5,13 @@ date: "1/4/2024"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+
 # Overview
+
 Vegetation type (softwood, hardwood, herb, shrub) by HUC across 4 RRK. 
 
 # Packages

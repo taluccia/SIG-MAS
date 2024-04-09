@@ -5,11 +5,12 @@ date: "2/7/2024"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
 
-## Set global options
-Prevent scientific notation of numeric values; use =0 to reset
-```{r}
-options(scipen=999)
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
 ```
 
 # Library
@@ -27,7 +28,6 @@ df = read_csv("../data/datacube/datacube_weighted_20240205.csv")
 df
 ```
 
-
 # FIRE SN
 
 ```{r}
@@ -40,8 +40,6 @@ df
     filter(Region=="SN")
 
 )
-  
-
 ```
 
 ## Box plot all data
