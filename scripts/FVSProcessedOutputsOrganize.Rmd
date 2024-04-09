@@ -49,15 +49,28 @@ unique(huc$Priorty)
 ```{r}
 unique(huc$TxWPrct)
 ```
+```{r}
+names(huc)
+```
+```{r}
+(hucs = huc %>%  
+    dplyr::select(-c('WIPGeNm',"WIP_Cpc",  "BpRnkWp",  "WuRnkWp",  "BpPrctW",  "WPrctWp")) %>%
+   rename(wuiGroup = TxWPrct, fireGroup = TxBpPrc, hybridGroup = TxRffcP, regionName = RRK_Rgn, hybridPrty=Priorty, hybridVal=rffc, hybridRnk=rffcRnk, hybridPrct =rffcPrc)
+ )
+
+```
 
 ## Rename and additions to HUC data
-
+"Sierra Nevada Region" "North Coast Region"   "Central Coast Region" "South Coast Region"  
 ```{r}
-( hucsClean = huc %>%  
-  rename(wuiGroup = TxWPrct, fireGroup = TxBpPrc, hybridGroup = TxRffcP, regionName = RRK_Rgn, hybridPrty=Priorty, hybridVal=rffc, hybridRnk=rffcRnk, hybridPrct =rffcPrc)) %>% 
+( attributeAdds = huc %>%  
+    dplyr::select(-c('WIPGeNm',"WIP_Cpc",  "BpRnkWp",  "WuRnkWp",  "BpPrctW",  "WPrctWp")) %>%
+   rename(wuiGroup = TxWPrct, fireGroup = TxBpPrc, hybridGroup = TxRffcP, regionName = RRK_Rgn, hybridPrty=Priorty, hybridVal=rffc, hybridRnk=rffcRnk, hybridPrct =rffcPrc) %>%
+
   mutate(region = ifelse(regionName == "Sierra Nevada Region", "SN",
                 ifelse(regionName == "North Coast Region" , "NC",
-              ifelse(regionName == "South Coast Region" , "SC", "CC")))) %>%
+              ifelse(regionName == "South Coast Region" , "SC", 
+                    ifelse(regionName == "Central Coast Region" , "CC", "NA"))))) %>%
     mutate(timeWui= ifelse(wuiGroup == 25, "yr1to5_16to20",
                     ifelse(wuiGroup == 50 , "yr6to10",
                     ifelse(wuiGroup == 75 , "yr11to15", "notTreated")))) %>%
@@ -67,29 +80,29 @@ unique(huc$TxWPrct)
     mutate(timeHybrid = ifelse(hybridGroup == 25, "yr1to5",
                     ifelse(hybridGroup == 50 , "yr6to10",
                      ifelse(hybridGroup == 75 , "yr11to15", "yr16to20")))) %>%
-  dplyr::select(huc12, ObjctID, BpMean:BpRank, PropTrt:regionName,  WuiPrct:states, TxArea:wuiGroup, fireGroup, hybridVal:hybridGroup, region:timeHybrid, geometry)
+  dplyr::select(huc12:hybridGroup, region:timeHybrid, geometry)
+)
 ```
-
-
 
 
 # Write 
 ```{r eval=FALSE, include=FALSE}
-st_write(hucClean, "../outputs/boundaries/hucsShp/TxHucsTimingGroups.shp", driver="ESRI Shapefile")
+st_write(attributeAdds, "../outputs/boundaries/hucsShp/TxHucsTimingGroups.shp", driver="ESRI Shapefile")
 ```
 
+
 ```{r}
-unique(hucsClean$regionName)
-unique(hucsClean$region)
+unique(attributeAdds$regionName)
+unique(attributeAdds$region)
 ```
 
 ## Subset by region
 
 ```{r}
-( snOrg = hucClean %>% st_drop_geometry() %>% filter(regionName=="Sierra Nevada Region") )
-( ncOrg = hucClean %>% st_drop_geometry() %>% filter(regionName=="North Coast Region") )
-( scOrg = hucClean %>% st_drop_geometry() %>% filter(regionName=="South Coast Region") )
-( ccOrg = hucClean %>% st_drop_geometry() %>% filter(regionName== "Central Coast Region") )
+( snOrg = attributeAdds %>% st_drop_geometry() %>% filter(region=="SN") )
+( ncOrg = attributeAdds %>% st_drop_geometry() %>% filter(region=="NC") )
+( scOrg = attributeAdds %>% st_drop_geometry() %>% filter(region=="SC") )
+( ccOrg = attributeAdds %>% st_drop_geometry() %>% filter(region== "CC") )
 ```
 
 
@@ -99,11 +112,17 @@ unique(hucsClean$region)
 List of csv files
 
 ```{r}
+listBase <- list.files(path="../data/FVS/processed_output/baseline/",pattern='csv$', full.names = TRUE)
+
 listCC <- list.files(path="../data/FVS/processed_output/CC/",pattern='csv$', full.names = TRUE)
 
 listSC <- list.files(path="../data/FVS/processed_output/SC/",pattern='csv$', full.names = TRUE)
 
 listSN <- list.files(path="../data/FVS/processed_output/SN/",pattern='csv$', full.names = TRUE)
+```
+
+```{r}
+listBase
 ```
 
 ```{r}
@@ -120,6 +139,7 @@ listSN
 
 ### Name items in a list with file name
 ```{r}
+names(listBase) <- tools::file_path_sans_ext(basename(listBase))
 names(listCC) <- tools::file_path_sans_ext(basename(listCC))
 names(listSC) <- tools::file_path_sans_ext(basename(listSC))
 names(listSN) <- tools::file_path_sans_ext(basename(listSN))
@@ -128,6 +148,7 @@ names(listSN) <- tools::file_path_sans_ext(basename(listSN))
 
 
 ```{r}
+listBase[1] %>% read.csv()
 listCC[1] %>% read.csv()
 listSC[1] %>% read.csv()
 listSN[1] %>% read.csv()
@@ -141,13 +162,14 @@ part1 <- function(list){
   purrr::map(list, read.csv) %>%
     map2(names(.), ~mutate(.x, Tx = .y)) %>%
   bind_rows() %>%
-    separate(., Tx, into = c("run", "RRK", 'Priority', 'TxIntensity', 'TxType', 'extraName'), sep = '_', convert=TRUE, extra='merge')
+    separate(., Tx, into = c("run", "region", 'Priority', 'Intensity', 'TxType', 'extraName'), sep = '_', convert=TRUE, extra='merge')
 }
 
 ```
 
 # Apply function to list
 ```{r}
+fvs_Base = part1(listBase)
 fvs_cc = part1(listCC)
 fvs_sc = part1(listSC)
 fvs_sn = part1(listSN)
@@ -155,6 +177,7 @@ fvs_sn = part1(listSN)
 
 
 ```{r}
+fvs_Base
 fvs_cc
 fvs_sc
 fvs_sn
@@ -184,46 +207,91 @@ unique(fvs_sn$run)
 # Check data
 
 ```{r}
-( new_DF <- fvs[rowSums(is.na(fvs)) > 0,] )
-```
-```{r eval=FALSE, include=FALSE}
-fvs %>% 
-  select(Year, run, RRK, Priority, TxIntensity, TxType) %>% 
-  unite("name", run:TxType, sep= "_", remove = FALSE) %>%
-  select(name) %>%
-  distinct() %>%
-  write.csv(., "../outputs/fvs/FvsNames.csv", row.names = F)
-  
+( new_DF <- fvs_cc[rowSums(is.na(fvs_cc)) > 0,] )
 ```
 
 ```{r}
-fvs
+( new_DF <- fvs_sc[rowSums(is.na(fvs_sc)) > 0,] )
 ```
 
 ```{r}
-fvsHucs = fvs %>%
-  dplyr::select(HUC12, RRK:TxType, run, Year:Fuel_6to12_x_100) %>%
+( new_DF <- fvs_sn[rowSums(is.na(fvs_sn)) > 0,] )
+```
+
+
+```{r}
+fvs_cc
+fvs_sc
+fvs_sn
+```
+## CC
+```{r}
+fvsHucs_cc = fvs_cc %>%
+  dplyr::select(HUC12, region:TxType, run, Year:Fuel_6to12_x_100) %>%
   mutate(TSC = TSC_x_100/100,
          SDI = SDI_x_100/100,
          QMD = QMD_x_100/100, 
          Fuel_lt3 = Fuel_lt3_x_100/100, 
          Fuel_3to6 = Fuel_3to6_x_100/100,
          Fuel_6to12 = Fuel_6to12_x_100/100) %>%
-  dplyr::select(HUC12:Year, TSC:Fuel_6to12)
+  dplyr::select(HUC12:Year, TSC:Fuel_6to12) %>%
+  rename(huc12=HUC12) %>%
+  mutate(huc12 = as.character(huc12))
 ```
 
 ```{r}
-glimpse(fvsHucs)
+glimpse(fvsHucs_cc)
 ```
 ```{r}
-n_distinct(fvsHucs$HUC12)
+n_distinct(fvsHucs_cc$huc12)
+```
+## SC
+```{r}
+fvsHucs_sc = fvs_sc %>%
+  dplyr::select(HUC12, region:TxType, run, Year:Fuel_6to12_x_100) %>%
+  mutate(TSC = TSC_x_100/100,
+         SDI = SDI_x_100/100,
+         QMD = QMD_x_100/100, 
+         Fuel_lt3 = Fuel_lt3_x_100/100, 
+         Fuel_3to6 = Fuel_3to6_x_100/100,
+         Fuel_6to12 = Fuel_6to12_x_100/100) %>%
+  dplyr::select(HUC12:Year, TSC:Fuel_6to12) %>%
+  rename(huc12=HUC12) %>%
+  mutate(huc12 = as.character(huc12))
 ```
 
 ```{r}
-3*3*3*4
+glimpse(fvsHucs_sc)
+```
+```{r}
+n_distinct(fvsHucs_sc$huc12)
+```
+## SN
+```{r}
+fvsHucs_sn = fvs_sn %>%
+  dplyr::select(HUC12, region:TxType, run, Year:Fuel_6to12_x_100) %>%
+  mutate(TSC = TSC_x_100/100,
+         SDI = SDI_x_100/100,
+         QMD = QMD_x_100/100, 
+         Fuel_lt3 = Fuel_lt3_x_100/100, 
+         Fuel_3to6 = Fuel_3to6_x_100/100,
+         Fuel_6to12 = Fuel_6to12_x_100/100) %>%
+  dplyr::select(HUC12:Year, TSC:Fuel_6to12) %>%
+  rename(huc12=HUC12) %>%
+  mutate(huc12 = as.character(huc12))
+```
+
+```{r}
+glimpse(fvsHucs_sn)
+```
+```{r}
+n_distinct(fvsHucs_sn$huc12)
 ```
 
 # Fix duplicate issue and extract HUCs in RRK
+
+Remove Huc12 that are included in the incorrect region because they are on the edge.
+
 ```{r}
 435+774+1148+480
 2837*3*3*3*4
@@ -233,50 +301,15 @@ North Coast Region	774
 Sierra Nevada Region	1148			
 South Coast Region	480	
 
-Known Duplicates These Hucs are duplicated in two RRK Regions
-180600060705 --CC
-180600070204 --cc
-180600070208 --cc
-180600070303 --cc
-180600070601 --cc
-180600070602 --cc
-180600080602 --cc
-180902060105 --sn
-```{r}
-fvsHucs
-```
-
-
-```{r}
-targetCC = c('180600060705', '180600070204', '180600070208', '180600070303', '180600070601', '180600070602', '180600080602')
-```
-```{r}
-targetSN = c('180902060105')
-```
-
 ## CC
 ```{r}
 435*3*3*3*4
 ```
 
 ```{r}
-( noDupsCC = fvsHucs %>% 
-    filter(!HUC12 %in% targetCC) %>%
-    filter(RRK=="CC") )
-```
-```{r}
-( dupCC = fvsHucs %>% 
-    filter(HUC12 %in% targetCC) %>%
-    filter(RRK=="CC")
-    )
-```
-
-```{r}
-( cc_clean = bind_rows(noDupsCC, dupCC) )
-```
-```{r}
-cc_clean %>% group_by(RRK) %>% 
-  summarise(n = n_distinct(HUC12))
+(ccOnlyHucs <- filter(fvsHucs_cc,
+                       huc12 %in% ccOrg$huc12)
+)
 ```
 
 ## SN
@@ -284,38 +317,11 @@ cc_clean %>% group_by(RRK) %>%
 ```{r}
 1148*3*3*3*4
 ```
-```{r}
-( noDupsSN = fvsHucs %>% 
-    filter(!HUC12 %in% targetSN) %>%
-    filter(RRK=="SN") )
-```
 
 ```{r}
-( dupSN = fvsHucs %>% 
-    filter(HUC12 %in% targetSN) %>%
-    filter(RRK=="SN")
-    )
-```
-
-```{r}
-( sn = bind_rows(noDupsSN, dupSN) )
-```
-
-### Identify additional 3 hucs to remove
-
-```{r}
-snOrg
-( x = data_frame(aggregate(sn$HUC12, list(num=sn$HUC12), length)) )
-x %>% filter(x!=108)
-(checksnhucs = x %>% rename(HUC12=num) %>% mutate(HUC12=as.character(HUC12)) %>% left_join(snOrg, by='HUC12') )
-( new_DF <- subset(checksnhucs, is.na(checksnhucs$RRK)) )
-```
-```{r}
-removeSN = c('180201210406', '180800030307','180800031600')
-```
-
-```{r}
-( sn_clean = sn %>% filter(!HUC12 %in% removeSN) )
+(snOnlyHucs <- filter(fvsHucs_sn,
+                       huc12 %in% snOrg$huc12)
+)
 ```
 
 ## SC
@@ -323,27 +329,21 @@ removeSN = c('180201210406', '180800030307','180800031600')
 ```{r}
 480*3*3*3*4
 ```
+
 ```{r}
-( sc = fvsHucs %>% filter(RRK=='SC') )
+(scOnlyHucs <- filter(fvsHucs_sc,
+                       huc12 %in% scOrg$huc12)
+)
 ```
 
 ```{r}
-scOrg
-( xsc = data_frame(aggregate(sc$HUC12, list(num=sc$HUC12), length)) )
-
-(checkschucs = xsc %>% rename(HUC12=num) %>% mutate(HUC12=as.character(HUC12)) %>% left_join(scOrg, by='HUC12') )
-( new_DF <- subset(checkschucs, is.na(checkschucs$RRK)) )
+n_distinct(scOnlyHucs$huc12)
 ```
+# Check years
 ```{r}
-cat(paste0(sprintf('"%s"', unique(new_DF$HUC12)), collapse = ", "))
-```
-```{r}
-targetSC = c("180300030407", "180300030602", "180300030604", "180300031103", "180300031202", "180300031302", "180300031402", "180300031406", "180600060705", "180600070204", "180600070208", "180600070303", "180600070601", "180600070602", "180600080602", "180600140101", "180701030202", "180701040500", "180701050303", "180701050401", "180701050402", "180701060101", "180701060102", "180701060604", "180701060606", "180701060701", "180701060702", "180701060703", "180701070001", "180702010001", "180702010002", "180702030705", "180702031003", "180702040201", "180702040202", "180703030504", "180703041201", "180703041202", "180703041300", "180703050501", "180703050502", "180703051102", "180703051103", "180703051104", "180703051105", "180703051201", "180703051202", "180703051303", "180703051304", "180902060105", "180902060401", "180902060901", "180902060902", "180902061103", "180902061302", "180902061303", "180902061304", "180902061305", "180902061306", "180902061308", "180902061402", "180902061404", "180902061405", "180902061406", "180902061408", "180902061501", "180902061601", "180902061702", "180902061703", "180902061704", "180902061705", "180902061802", "180902061901", "180902061902", "180902061903", "180902062001", "180902062003", "180902062004", "180902080303", "180902080401", "180902080502", "180902080503", "180902080504", "180902080701", "180902080703", "180902080704", "181001000301", "181001000302", "181001000402", "181001000403", "181001000501", "181001000503", "181001000603", "181001000604", "181001000701", "181001000702", "181001000704", "181001000905", "181001000906", "181001001001", "181001001502", "181001001503", "181001001603", "181001001702", "181001004401", "181001004402", "181001004404", "181002010302", "181002010304", "181002010404", "181002010602", "181002010604", "181002010705", "181002010801", "181002010804", "181002020108", "181002020202", "181002020203", "181002020301", "181002020302", "181002020303", "181002020305", "181002030104", "181002030303", "181002030304", "181002030601", "181002030602", "181002030701", "181002040904", "181002041003", "181002041005", "181002041007", "181002041501", "181002041505", "181002041508")
-```
-
-
-```{r}
-( sc_clean = sc %>% filter(!HUC12 %in% targetSC) )
+unique(scOnlyHucs$Year)
+unique(ccOnlyHucs$Year)
+unique(snOnlyHucs$Year)
 ```
 
 ## NC
@@ -353,42 +353,53 @@ targetSC = c("180300030407", "180300030602", "180300030604", "180300031103", "18
 ```{r}
 774*3*3*3*4
 ```
-```{r}
-( nc = fvsHucs %>% filter(RRK=='NC') )
-```
 
-```{r}
-ncOrg
-( xnc = data_frame(aggregate(nc$HUC12, list(num=nc$HUC12), length)) )
 
-(checkNchucs = xnc %>% rename(HUC12=num) %>% mutate(HUC12=as.character(HUC12)) %>% left_join(ncOrg, by='HUC12') )
-( new_DF_NC <- subset(checkNchucs, is.na(checkNchucs$RRK)) )
-```
-```{r}
-cat(paste0(sprintf('"%s"', unique(new_DF_NC$HUC12)), collapse = ", "))
-```
-```{r}
-targetNC = c("180201041006", "180201160310", "180500020802")
-```
-
-```{r}
-( nc_clean = nc %>% filter(!HUC12 %in% targetNC) )
-```
 
 # Recombine data from the four RRKs
 ```{r}
 435+774+1148+480
 2837*3*3*3*4
 ```
+
+## SC, CC, SN
 ```{r}
-( dataFvs = bind_rows(cc_clean, nc_clean, sn_clean, sc_clean) )
+435+1148+480
+```
+
+```{r}
+2063*3*3*3*4
+```
+#add orginal HUC variables
+```{r}
+( scJoin = full_join(scOnlyHucs, scOrg, by="huc12") )
+```
+
+```{r}
+( snJoin = full_join(snOnlyHucs, snOrg, by="huc12") )
+```
+
+```{r}
+( ccJoin = full_join(ccOnlyHucs, ccOrg, by="huc12") )
+```
+
+# Bind rows together
+```{r}
+( dataFvs = bind_rows(scJoin, ccJoin, snJoin) )
+```
+
+```{r}
+(
+dataFvs1 = dataFvs %>%
+    dplyr::select(huc12:Fuel_6to12, regionName, hucAc, wuiGroup, fireGroup, hybridGroup, timeWui, timeFire, timeHybrid) %>% rename(region=region.x)
+)
 ```
 
 # Check
 
 ```{r}
-dataFvs %>% group_by(RRK) %>% 
-  summarise(n = n_distinct(HUC12))
+dataFvs1 %>% group_by(region) %>% 
+  summarise(n = n_distinct(huc12))
 ```
 
 # Column updates for Datacube
@@ -400,19 +411,17 @@ unique(dataFvs$Priority)
 ```
 
 ```{r}
-dataFvs1 = dataFvs %>% 
+dataFvs2 = dataFvs1 %>% 
   mutate(Priority = str_replace(Priority, 'RFFC', 'Hybrid')) %>%
-  mutate(gradebook, letter = ifelse(grade %in% 60:69, "D",
-                                     ifelse(grade %in% 70:79, "C",
-                                            ifelse(grade %in% 80:89, "B",
-                                                   ifelse(grade %in% 90:99, "A", "F")))))
+  mutate(Year = str_replace(Year, '2044', '2039'))
 ```
 
 ```{r}
-unique(dataFvs1$Priority)
+unique(dataFvs2$Priority)
+unique(dataFvs2$Year)
 ```
 
 # Write Summary Table
 ```{r}
-write.csv(dataFvs1, "../outputs/fvs/FVSprocessedOutputsHucs.csv", row.names = F)
+write.csv(dataFvs2, "../outputs/fvs/FVSprocessedOutputsHucsScCcSn.csv", row.names = F)
 ```

@@ -96,6 +96,10 @@ st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) 4473
 ( joinHucRrk = st_join(caHucs, rrk, largest=TRUE))
 ```
 
+
+```{r}
+
+```
 ## Join WIPS to HUCs
 ```{r}
 ( joinHucRrkWip = st_join(joinHucRrk, wip_ab, largest=TRUE) )

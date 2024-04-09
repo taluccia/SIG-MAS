@@ -26,10 +26,12 @@ ca = st_read("../data/boundaries/California.shp", "California")
 ```
 
 ```{r}
-hucs = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+hucs = st_read("../outputs/boundaries/hucsShp/TxHucsTimingGroups.shp", "TxHucsTimingGroups")
 ```
 
-
+```{r}
+hucs
+```
 # Figures
 
 ## Fire Priority
@@ -40,7 +42,7 @@ firePriority = ggplot() +
   
   new_scale_fill() +
     geom_sf(data=hucs, aes(fill = as.factor(TxBpPrc)), lwd = 0)+
-   scale_fill_manual(values = c('#e31a1c', '#fd8d3c','#fecc5c','#ffffb2'), breaks = c("25","50","75","100"),
+   scale_fill_manual(values = c('#bd0026', '#f03b20','#fd8d3c','#fecc5c'), breaks = c("25","50","75","100"),
                     labels = c("1-5","6-10","11-15","16-20"), name="Years") +
   coord_sf()+
   theme_minimal() + 
@@ -51,6 +53,34 @@ firePriority
 ```
 ```{r}
 ggsave("../figures/PriorityFire.png", plot=firePriority, dpi=600, bg="white")
+```
+
+## South Coast
+```{r}
+scHucs = hucs %>% filter(region=="South Coast Region")
+```
+
+
+
+
+```{r}
+firePrioritySC = ggplot() +
+  geom_sf(data=ca, fill="cornsilk3", colour="cornsilk3", alpha=.75) +
+  
+  new_scale_fill() +
+    geom_sf(data=scHucs, aes(fill = as.factor(TxBpPrc)), lwd = 0)+
+   scale_fill_manual(values = c('#bd0026', '#f03b20','#fd8d3c','#fecc5c'), breaks = c("25","50","75","100"),
+                    labels = c("1-5","6-10","11-15","16-20"), name="Years") +
+  coord_sf()+
+  theme_minimal() + 
+  labs(title="Fire Priority") +
+  theme(legend.position = c(0.8, 0.7))
+
+firePrioritySC
+```
+
+```{r}
+ggsave("../figures/PriorityFireSC.png", plot=firePrioritySC, dpi=600, bg="white")
 ```
 
 ## WUI Priority

@@ -56,7 +56,7 @@ library('jsonlite')
 ## CSV weather data
 output from GEE
 ```{r}
-list <- list.files(path="../data/weather/timestep2534/cc", pattern='csv$', full.names = TRUE)
+list <- list.files(path="../data/weather/timestep3544/sc", pattern='csv$', full.names = TRUE)
 ```
 
 ```{r}
@@ -109,8 +109,13 @@ orgDf2 <- function(x){
 ## Apply  functions
 
 ```{r}
-list %>% combineCsv() %>% orgDf() # for sample size
+list %>% combineCsv() %>% orgDf() %>% group_by(huc12) %>% summarize(n=n()) # for sample size 
 ```
+```{r}
+list %>% combineCsv() %>% orgDf() 
+```
+
+
 
 ```{r}
 df = list %>% combineCsv() %>% orgDf() %>% temp() %>% orgDf2() 
