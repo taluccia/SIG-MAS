@@ -5,6 +5,10 @@ date: "8/25/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
 
 # Packages
 ```{r}

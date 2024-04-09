@@ -5,6 +5,11 @@ date: "10/18/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+
 # Overview
 Reformat raster values for EE
 

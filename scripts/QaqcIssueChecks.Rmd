@@ -5,15 +5,18 @@ date: "4/2/2024"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
 
 # Overview
 
 Check various issues
 
-Prevent scientific notation for number values; use =0 to reset
-```{r}
-options(scipen=999)
-```
 
 # Library
 ```{r}

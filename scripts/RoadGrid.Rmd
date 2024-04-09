@@ -5,7 +5,18 @@ date: "7/16/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
+# Overview
+
 # Packages
+
 ```{r}
 library(tidyverse)
 library(sf)

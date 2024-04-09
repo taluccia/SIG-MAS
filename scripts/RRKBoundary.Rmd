@@ -3,6 +3,12 @@ title: "RRK Boundaries"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+
+
 # Overview
 This was looking at the RRK Boundaries for a structure issue that is occurring EE, but is a non issue in R.
 

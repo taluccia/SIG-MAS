@@ -5,8 +5,13 @@ date: "10/2/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
 # Overview
-Create exterior boundary for SN and NC HUCS.
+
+Create exterior boundary for SN and NC HUCS for Dave Schmidt to use with FVS runs.
 
 # Packages
 ```{r}

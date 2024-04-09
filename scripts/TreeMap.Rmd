@@ -4,9 +4,14 @@ author: "Anna Talucci"
 date: "10/5/2023"
 output: html_document
 ---
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+
 
 # Overview
-Create exterior boundary for SN and NC HUCS.
+
 
 # Packages
 ```{r}

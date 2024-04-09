@@ -5,6 +5,12 @@ date: "10/22/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+
+
 # Overview 
 Get landfire codes
 

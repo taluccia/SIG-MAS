@@ -4,9 +4,13 @@ author: "Anna Talucci"
 date: "10/15/2023"
 output: html_document
 ---
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
 
 # Overview
-Working with Raster attribute table
+
+Working with Raster attribute table; does not work for creating percent canopy raster for tree map.
 
 # Packages
 ```{r}

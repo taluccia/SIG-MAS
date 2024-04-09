@@ -5,6 +5,12 @@ date: "7/22/2023"
 output: html_document
 ---
 
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+# Overview
+
 # Library
 ```{r}
 library(tidyverse)
