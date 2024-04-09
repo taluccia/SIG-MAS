@@ -6,7 +6,7 @@ output: html_document
 ---
 
 # Overview
-Create exterior boundary for SN and NC HUCS.
+Reformat raster values for EE
 
 # Packages
 ```{r}

@@ -6,7 +6,7 @@ output: html_document
 ---
 
 # Overview
-Create exterior boundary for SN and NC HUCS.
+Working with Raster attribute table
 
 # Packages
 ```{r}
