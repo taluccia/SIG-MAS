@@ -14,6 +14,7 @@ options(scipen=999) #Prevent scientific notation of numeric values; use =0 to re
 ```
 
 # Overview
+**NEEDS UPDATING**
 Create bar plot to showing percent change at year 20 compared to baseline across the 108 scenarios for Total Stand Carbon. 
 
 
@@ -25,8 +26,10 @@ library(cowplot)
 
 # Data
 Read in FVS HUC12 level data.
+
+
 ```{r}
-fvs = read_csv("../data/FVS/FVSprocessedOutputsHucs.csv")
+fvs = read_csv("../data/FVS/FVSprocessedOutputsHucsScCcSnBase.csv")
 ```
 ```{r}
 fvs
@@ -34,20 +37,21 @@ fvs
 
 ```{r}
 ( TSCScenario = fvs %>% 
-  group_by(RRK, Priority, TxIntensity, TxType, Year) %>%
+  group_by(region, Priority, Intensity, TxType, Year) %>%
   summarize(meanTSC = mean(TSC),
             meanQMD = mean(QMD),
             meanSDI = mean(SDI), 
             meanFlt3 = mean(Fuel_lt3),
             meanF3to6 = mean(Fuel_3to6),
             meanF6to12 = mean(Fuel_6to12)) %>%
-  filter(Year==2024) %>%
-    filter(RRK=="SC")
+  #filter(Year==2024) %>%
+    filter(region=="SC") %>%
+    filter(Priority!="baseline")
 )
 ```
 
 ```{r}
-sc_tsc = ggplot(TSCScenario, aes(TxIntensity, meanTSC)) +
+( sc_tsc = ggplot(TSCScenario, aes(Intensity, meanTSC)) +
   geom_bar(stat = "identity", aes( legend = FALSE)) + 
   #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
               # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
@@ -56,11 +60,11 @@ sc_tsc = ggplot(TSCScenario, aes(TxIntensity, meanTSC)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90)) +
   labs(x="Intensity") +
-  theme(legend.position = "none") 
+  theme(legend.position = "none") )
 ```
 
 ```{r}
-sc_qmd = ggplot(TSCScenario, aes(TxIntensity, meanQMD)) +
+sc_qmd = ggplot(TSCScenario, aes(Intensity, meanQMD)) +
   geom_bar(stat = "identity", aes( legend = FALSE)) + 
   #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
               # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
@@ -73,7 +77,7 @@ sc_qmd = ggplot(TSCScenario, aes(TxIntensity, meanQMD)) +
 ```
 
 ```{r}
-sc_sdi = ggplot(TSCScenario, aes(TxIntensity, meanSDI)) +
+sc_sdi = ggplot(TSCScenario, aes(Intensity, meanSDI)) +
   geom_bar(stat = "identity", aes( legend = FALSE)) + 
   #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
               # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
@@ -86,7 +90,7 @@ sc_sdi = ggplot(TSCScenario, aes(TxIntensity, meanSDI)) +
 ```
 
 ```{r}
-sc_flt3 = ggplot(TSCScenario, aes(TxIntensity, meanFlt3)) +
+sc_flt3 = ggplot(TSCScenario, aes(Intensity, meanFlt3)) +
   geom_bar(stat = "identity", aes( legend = FALSE)) + 
   #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
               # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
@@ -99,7 +103,7 @@ sc_flt3 = ggplot(TSCScenario, aes(TxIntensity, meanFlt3)) +
 ```
 
 ```{r}
-sc_f3to6 = ggplot(TSCScenario, aes(TxIntensity, meanF3to6)) +
+sc_f3to6 = ggplot(TSCScenario, aes(Intensity, meanF3to6)) +
   geom_bar(stat = "identity", aes(legend = FALSE)) + 
   #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
               # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
@@ -113,7 +117,7 @@ sc_f3to6 = ggplot(TSCScenario, aes(TxIntensity, meanF3to6)) +
 
 
 ```{r}
-sc_f6to12 = ggplot(TSCScenario, aes(TxIntensity, meanF6to12)) +
+sc_f6to12 = ggplot(TSCScenario, aes(Intensity, meanF6to12)) +
   geom_bar(stat = "identity", aes( legend = FALSE)) + 
   #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
               # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
@@ -134,40 +138,67 @@ ggsave("../figures/FVS_SC_Baseline.png", plot = grid_sc, width = 10, height = 10
 ## Calculate Percent Change for TSC
 Select columns of interest to calculate change for each year compared to baseline (year=2024) for total stand carbon (TSC)
 ```{r}
-TscChange = fvs %>% 
-  dplyr::select(HUC12,run, RRK, Priority, TxIntensity, TxType, Year, TSC) %>%
+( TscBase = fvs %>% 
+  dplyr::select(huc12,run, region, Priority, Intensity, TxType, Year, TSC) %>%
+  pivot_wider(names_from = Year, values_from = TSC, names_glue = "base_{Year}") %>%
+    filter(Priority=="baseline") %>%
+    dplyr::select(huc12, region, base_2024, base_2029, base_2034, base_2039) 
+  
+)
+ 
+( TscTxYr = fvs %>% 
+  dplyr::select(huc12,run, region, Priority, Intensity, TxType, Year, TSC) %>%
   pivot_wider(names_from = Year, values_from = TSC, names_glue = "yr_{Year}") %>%
-  mutate(baseline = yr_2024,
-         diff2029 = yr_2029-yr_2024,
-         diff2034 = yr_2034-yr_2024,
-         diff2044 = yr_2044-yr_2024,
-         prct2029 = (diff2029/baseline)*100,
-         prct2034 = (diff2034/baseline)*100,
-         prct2044 = (diff2044/baseline)*100) 
+    filter(Priority!="baseline")
+  
+) 
 ```
+
 ```{r}
-TscChange
+( tscJoin = TscTxYr %>% 
+    full_join(., TscBase, by=c('huc12', 'region')) 
+)
+```
+
+```{r}
+( tscChange = tscJoin %>% 
+  mutate(diff2024 = yr_2024-base_2024,
+         diff2029 = yr_2029-base_2029,
+         diff2034 = yr_2034-base_2034,
+         diff2039 = yr_2039-base_2039,
+         prct2024 = (diff2024/base_2024)*100,
+         prct2029 = (diff2029/base_2029)*100,
+         prct2034 = (diff2034/base_2034)*100,
+         prct2039 = (diff2039/base_2039)*100) 
+)
+
+```
+
+
+```{r}
+tscChange
 ```
 
 ## Filter and summaries to 108 scenarios
 Summaries for for 108 scenarios for total stand carbon. Add a factor variable for graphing that combines the priority and treatment type. 
 ```{r}
-( TscPrctChnge_108 = TscChange %>% 
-  group_by(RRK, Priority, TxIntensity, TxType) %>%
-  summarise_at(vars('prct2029', 'prct2034', 'prct2044'), .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>% 
-      mutate(IntenseType = paste(TxIntensity,"-", TxType))%>%
-    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6")))
-)
+( TscPrctChnge_CcSc = tscChange %>% 
+  group_by(region, Priority, Intensity, TxType) %>%
+  summarise_at(vars('prct2024','prct2029', 'prct2034', 'prct2039'), .funs = lst(mean, sd, median, min, max), na.rm = TRUE) %>% 
+     mutate(IntenseType = paste(Intensity,"-", TxType))%>%
+    mutate(IntenseType  = factor(IntenseType , levels = c("500k - trt1", "1m - trt1", "2m - trt1", "500k - trt4", "1m - trt4", "2m - trt4", "500k - trt6",   "1m - trt6",  "2m - trt6"))) %>% 
+    filter(region %in% c("CC", "SC"))
+) 
 ```
 
 ## Bar Plot
 ```{r fig.height=10, fig.width=10}
-( tsc_plot = ggplot(TscPrctChnge_108, aes(IntenseType, prct2044_mean)) +
+( tsc_plotCcSc = ggplot(TscPrctChnge_CcSc, aes(IntenseType, prct2039_mean)) +
   geom_bar(stat = "identity", aes(fill = IntenseType, legend = FALSE)) + 
   #geom_text(aes(label = paste(round(prct2044_mean, 1), "%"),
               # vjust = ifelse(prct2044_mean >= 0, 0, 1))) +
   scale_y_continuous("Percent Change at 20 years for Total Stored Carbon") +
-  facet_wrap(~RRK + Priority,  ncol = 3 ) +
+  facet_wrap(~region + Priority,  ncol = 3 ) +
   scale_fill_manual(values=c('#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#abdda4','#66c2a5','#3288bd')) + 
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90)) +
@@ -178,6 +209,6 @@ Summaries for for 108 scenarios for total stand carbon. Add a factor variable fo
 
 ### Save as png
 ```{r}
-ggsave("../figures/TSCchangeBarPlot.png", plot = tsc_plot, width = 10, height = 10, units = c("in"), dpi = 600)
+ggsave("../figures/TSCchangeBarPlotCcSc.png", plot = tsc_plotCcSc, dpi = 600)
 ```
 

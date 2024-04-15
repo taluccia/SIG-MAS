@@ -29,7 +29,7 @@ library(tidyr)
 
 # HUC Data
 ```{r}
-huc = st_read("../data/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
+huc = st_read("../data/spatialDataCreateShp/TxHucs/TxPrctRankRrkWipRffc.shp", "TxPrctRankRrkWipRffc")
 ```
 
 ```{r}
@@ -185,6 +185,9 @@ fvs_sc
 fvs_sn
 ```
 
+
+# Check Data
+
 ```{r}
 unique(fvs_cc$TxType)
 unique(fvs_cc$TxIntensity)
@@ -206,17 +209,11 @@ unique(fvs_sn$Priority)
 unique(fvs_sn$run)
 ```
 
-# Check data
-
 ```{r}
 ( new_DF <- fvs_cc[rowSums(is.na(fvs_cc)) > 0,] )
-```
 
-```{r}
 ( new_DF <- fvs_sc[rowSums(is.na(fvs_sc)) > 0,] )
-```
 
-```{r}
 ( new_DF <- fvs_sn[rowSums(is.na(fvs_sn)) > 0,] )
 ```
 
@@ -226,9 +223,54 @@ fvs_cc
 fvs_sc
 fvs_sn
 ```
-## CC
+
+# Base line organize
 ```{r}
-fvsHucs_cc = fvs_cc %>%
+fvs_Base
+```
+
+```{r}
+baseline = fvs_Base %>% 
+  rename(region1 = run, run1 = region) %>%
+  rename(region = region1, run = run1)  %>%
+  select(HUC12:run) %>%
+  mutate(Priority = "baseline",
+         Intensity = "baseline",
+         TxType = "baseline") %>%
+  mutate(TSC = TSC_x_100/100,
+         SDI = SDI_x_100/100,
+         QMD = QMD_x_100/100, 
+         Fuel_lt3 = Fuel_lt3_x_100/100, 
+         Fuel_3to6 = Fuel_3to6_x_100/100,
+         Fuel_6to12 = Fuel_6to12_x_100/100) %>%
+  rename(huc12=HUC12) %>%
+  mutate(huc12 = as.character(huc12)) %>%
+dplyr::select(huc12:Year, region:Fuel_6to12)
+  
+```
+
+## Split base line by region
+```{r}
+( cc_base = baseline %>% filter(region=="CC") )
+( sc_base = baseline %>% filter(region=="SC") )
+( sn_base = baseline %>% filter(region=="SN") )
+```
+
+## check distinct HUC 12 ids
+```{r}
+n_distinct(cc_base$huc12)
+n_distinct(sc_base$huc12)
+n_distinct(sn_base$huc12)
+```
+
+
+# Rescale FVS outputs
+
+## Function
+
+```{r}
+rescale <- function(x){
+  x %>%
   dplyr::select(HUC12, region:TxType, run, Year:Fuel_6to12_x_100) %>%
   mutate(TSC = TSC_x_100/100,
          SDI = SDI_x_100/100,
@@ -239,55 +281,22 @@ fvsHucs_cc = fvs_cc %>%
   dplyr::select(HUC12:Year, TSC:Fuel_6to12) %>%
   rename(huc12=HUC12) %>%
   mutate(huc12 = as.character(huc12))
+}
+
 ```
 
+## Apply rescale function
 ```{r}
-glimpse(fvsHucs_cc)
-```
-```{r}
-n_distinct(fvsHucs_cc$huc12)
-```
-## SC
-```{r}
-fvsHucs_sc = fvs_sc %>%
-  dplyr::select(HUC12, region:TxType, run, Year:Fuel_6to12_x_100) %>%
-  mutate(TSC = TSC_x_100/100,
-         SDI = SDI_x_100/100,
-         QMD = QMD_x_100/100, 
-         Fuel_lt3 = Fuel_lt3_x_100/100, 
-         Fuel_3to6 = Fuel_3to6_x_100/100,
-         Fuel_6to12 = Fuel_6to12_x_100/100) %>%
-  dplyr::select(HUC12:Year, TSC:Fuel_6to12) %>%
-  rename(huc12=HUC12) %>%
-  mutate(huc12 = as.character(huc12))
+rescale_cc = fvs_cc %>% rescale()
+rescale_sc = fvs_sc %>% rescale()
+rescale_sn = fvs_sn %>% rescale()
 ```
 
+## check distinct HUC 12 ids
 ```{r}
-glimpse(fvsHucs_sc)
-```
-```{r}
-n_distinct(fvsHucs_sc$huc12)
-```
-## SN
-```{r}
-fvsHucs_sn = fvs_sn %>%
-  dplyr::select(HUC12, region:TxType, run, Year:Fuel_6to12_x_100) %>%
-  mutate(TSC = TSC_x_100/100,
-         SDI = SDI_x_100/100,
-         QMD = QMD_x_100/100, 
-         Fuel_lt3 = Fuel_lt3_x_100/100, 
-         Fuel_3to6 = Fuel_3to6_x_100/100,
-         Fuel_6to12 = Fuel_6to12_x_100/100) %>%
-  dplyr::select(HUC12:Year, TSC:Fuel_6to12) %>%
-  rename(huc12=HUC12) %>%
-  mutate(huc12 = as.character(huc12))
-```
-
-```{r}
-glimpse(fvsHucs_sn)
-```
-```{r}
-n_distinct(fvsHucs_sn$huc12)
+n_distinct(rescale_cc$huc12)
+n_distinct(rescale_sc$huc12)
+n_distinct(rescale_sn$huc12)
 ```
 
 # Fix duplicate issue and extract HUCs in RRK
@@ -309,9 +318,8 @@ South Coast Region	480
 ```
 
 ```{r}
-(ccOnlyHucs <- filter(fvsHucs_cc,
-                       huc12 %in% ccOrg$huc12)
-)
+(ccOnlyHucs <- filter(rescale_cc,huc12 %in% ccOrg$huc12))
+(ccOnlyBaseline <- filter(cc_base,huc12 %in% ccOrg$huc12))
 ```
 
 ## SN
@@ -321,9 +329,8 @@ South Coast Region	480
 ```
 
 ```{r}
-(snOnlyHucs <- filter(fvsHucs_sn,
-                       huc12 %in% snOrg$huc12)
-)
+(snOnlyHucs <- filter(rescale_sn, huc12 %in% snOrg$huc12))
+(snOnlyBaseline <- filter(sn_base,huc12 %in% snOrg$huc12))
 ```
 
 ## SC
@@ -333,14 +340,21 @@ South Coast Region	480
 ```
 
 ```{r}
-(scOnlyHucs <- filter(fvsHucs_sc,
-                       huc12 %in% scOrg$huc12)
-)
+(scOnlyHucs <- filter(rescale_sc, huc12 %in% scOrg$huc12))
+(scOnlyBaseline <- filter(sc_base,huc12 %in% scOrg$huc12))
 ```
 
+## Check unique HUC 12 ids
 ```{r}
 n_distinct(scOnlyHucs$huc12)
+n_distinct(scOnlyBaseline$huc12)
+n_distinct(ccOnlyHucs$huc12)
+n_distinct(ccOnlyBaseline$huc12)
+n_distinct(snOnlyHucs$huc12)
+n_distinct(snOnlyBaseline$huc12)
 ```
+
+
 # Check years
 ```{r}
 unique(scOnlyHucs$Year)
@@ -372,22 +386,26 @@ unique(snOnlyHucs$Year)
 ```{r}
 2063*3*3*3*4
 ```
-#add orginal HUC variables
+
+# add orginal HUC variables
 ```{r}
 ( scJoin = full_join(scOnlyHucs, scOrg, by="huc12") )
+( scJoinBase = full_join(scOnlyBaseline, scOrg, by="huc12") )
 ```
 
 ```{r}
 ( snJoin = full_join(snOnlyHucs, snOrg, by="huc12") )
+( snJoinBase = full_join(snOnlyBaseline, snOrg, by="huc12") )
 ```
 
 ```{r}
 ( ccJoin = full_join(ccOnlyHucs, ccOrg, by="huc12") )
+( ccJoinBase = full_join(ccOnlyBaseline, ccOrg, by="huc12") )
 ```
 
 # Bind rows together
 ```{r}
-( dataFvs = bind_rows(scJoin, ccJoin, snJoin) )
+( dataFvs = bind_rows(scJoin, scJoinBase, ccJoin,ccJoinBase, snJoin, snJoinBase) )
 ```
 
 ```{r}
@@ -425,5 +443,5 @@ unique(dataFvs2$Year)
 
 # Write Summary Table
 ```{r}
-write.csv(dataFvs2, "../outputs/fvs/FVSprocessedOutputsHucsScCcSn.csv", row.names = F)
+write.csv(dataFvs2, "../outputs/fvs/FVSprocessedOutputsHucsScCcSnBase.csv", row.names = F)
 ```

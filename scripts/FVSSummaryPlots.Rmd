@@ -14,6 +14,8 @@ options(scipen=999) #Prevent scientific notation of numeric values; use =0 to re
 ```
 
 # Overview
+**NEEDS UPDATING**
+
 Create scatter plots with join distribution of 500k (x-axis) versus 2.3 million (y-axis) intensity. 
 
 
@@ -24,8 +26,9 @@ library(tidyverse)
 
 # Data
 Read in FVS huc level data.
+
 ```{r}
-fvs = read_csv("../data/FVS/FVSprocessedOutputsHucs.csv")
+fvs = read_csv("../data/FVS/FVSprocessedOutputsHucsScCcSnBase.csv")
 ```
 
 ```{r}
@@ -35,23 +38,31 @@ fvs
 # Reorganization data for joint distribution plots
 Check unique codes for treatment intensity
 ```{r}
-unique(fvs$TxIntensity)
+unique(fvs$Intensity)
 
 ```
 
 ## Filter for 500k intensity
 ```{r}
+TxI500k = fvs %>% 
+  filter(Intensity == "500k") %>% 
+  filter(Year==2039) %>%
+  rename(TSC500k=TSC, SDI500k=SDI, QMD500k=QMD, Fuel_lt3500k = Fuel_lt3, Fuel_3to6500k=Fuel_3to6, Fuel_6to12500k=Fuel_6to12)
+```
+
+## Filter for 500k intensity
+```{r}
 TxI500 = fvs %>% 
-  filter(TxIntensity == "500k") %>% 
-  filter(Year==2044) %>%
+  filter(Intensity == "500k") %>% 
+  filter(Year==2039) %>%
   rename(TSC500k=TSC, SDI500k=SDI, QMD500k=QMD, Fuel_lt3500k = Fuel_lt3, Fuel_3to6500k=Fuel_3to6, Fuel_6to12500k=Fuel_6to12)
 ```
 
 ## Filter for 2.3 million intensity
 ```{r}
 TxI2m = fvs %>% 
-  filter(TxIntensity == "2m") %>% 
-  filter(Year==2044) %>%
+  filter(Intensity == "2m") %>% 
+  filter(Year==2039) %>%
   rename(TSC2m=TSC, SDI2m=SDI, QMD2m=QMD, Fuel_lt32m = Fuel_lt3, Fuel_3to62m=Fuel_3to6, Fuel_6to122m=Fuel_6to12)
 ```
 
@@ -63,13 +74,14 @@ glimpse(df1)
 
 ## Select variables of interest for plots
 ```{r}
-tsc = df1 %>% dplyr::select(HUC12:TxType, TSC500k, TSC2m)
-sdi = df1 %>% dplyr::select(HUC12:TxType, SDI500k, SDI2m)
-qmd = df1 %>% dplyr::select(HUC12:TxType, QMD500k, QMD2m)
+tsc_cc = df1 %>% dplyr::select(huc12:TxType, TSC500k, TSC2m) %>% filter(region == "CC")
+tsc_sc = df1 %>% dplyr::select(huc12:TxType, TSC500k, TSC2m) %>% filter(region == "SC")
 
-flt3 = df1 %>% dplyr::select(HUC12:TxType, Fuel_lt3500k, Fuel_lt32m)
-f3to6 = df1 %>% dplyr::select(HUC12:TxType, Fuel_3to6500k, Fuel_3to62m)
-f6to12 = df1 %>% dplyr::select(HUC12:TxType, Fuel_6to12500k, Fuel_6to122m)
+```
+
+```{r}
+flt3_cc = df1 %>% dplyr::select(huc12:TxType, Fuel_lt3500k, Fuel_lt32m) %>% filter(region == "CC")
+flt3_sc = df1 %>% dplyr::select(huc12:TxType, Fuel_lt3500k, Fuel_lt32m) %>% filter(region == "SC")
 ```
 
 # Joint Distribution Visualizations
@@ -77,7 +89,7 @@ f6to12 = df1 %>% dplyr::select(HUC12:TxType, Fuel_6to12500k, Fuel_6to122m)
 ## Total Stand Carbon
 ```{r fig.height=10, fig.width=10}
 (
-  tsc_plot = ggplot(data = tsc, aes(x=TSC500k, y=TSC2m)) +
+  tsc_plot_cc = ggplot(data = tsc_cc, aes(x=TSC500k, y=TSC2m)) +
     geom_point(color="grey50", alpha=.5, size=.5, shape=21) +
     facet_wrap(~Priority + TxType) +
     geom_abline(intercept = 0, slope=1) +
@@ -91,13 +103,12 @@ f6to12 = df1 %>% dplyr::select(HUC12:TxType, Fuel_6to12500k, Fuel_6to122m)
 
 ### Save 
 ```{r}
-ggsave("../figures/TSC20yr500kv2m.png", plot = tsc_plot, width = 10, height = 10, units = c("in"), dpi = 600)
+ggsave("../figures/TSC2039_500kv2m_CC.png", plot = tsc_plot_cc, width = 10, height = 10, units = c("in"), dpi = 600)
 ```
 
-## Stand Density Index
 ```{r fig.height=10, fig.width=10}
 (
-  sdi_plot = ggplot(data = sdi, aes(x=SDI500k, y=SDI2m)) +
+  tsc_plot_sc = ggplot(data = tsc_sc, aes(x=TSC500k, y=TSC2m)) +
     geom_point(color="grey50", alpha=.5, size=.5, shape=21) +
     facet_wrap(~Priority + TxType) +
     geom_abline(intercept = 0, slope=1) +
@@ -105,39 +116,20 @@ ggsave("../figures/TSC20yr500kv2m.png", plot = tsc_plot, width = 10, height = 10
     theme(aspect.ratio=1) +
     
     stat_smooth(method=lm, formula= (y ~ x), fullrange=TRUE) +
-    labs(x="500k Stand density index (trees/ac)", y= "2m Stand density index (trees/ac)")
+    labs(x="500k Total Stand Carbon (mt/ac)", y= "2m Total Stand Carbon (mt/ac) ")
 )
 ```
 
-### Save
+### Save 
 ```{r}
-ggsave("../figures/SDI20yr500kv2m.png", plot = sdi_plot, width = 10, height = 10, units = c("in"), dpi = 600)
+ggsave("../figures/TSC2039_500kv2m_SC.png", plot = tsc_plot_sc, width = 10, height = 10, units = c("in"), dpi = 600)
 ```
 
-## Quadartic Mean Diameter
+
+## Fuel Load less than 3" diameter CC
 ```{r fig.height=10, fig.width=10}
 (
-  qmd_plot = ggplot(data = qmd, aes(x=QMD500k, y=QMD2m)) +
-    geom_point(color="grey50", alpha=.5, size=.5, shape=21) +
-    facet_wrap(~Priority + TxType) +
-    geom_abline(intercept = 0, slope=1) +
-    theme_bw() +
-    theme(aspect.ratio=1) +
-    
-    stat_smooth(method=lm, formula= (y ~ x), fullrange=TRUE) +
-    labs(x="500k Quadratic mean diameter (in)", y= "2m Quadratic mean diameter (in)")
-)
-```
-
-### Save
-```{r}
-ggsave("../figures/QMD20yr500kv2m.png", plot = qmd_plot, width = 10, height = 10, units = c("in"), dpi = 600)
-```
-
-## Fuel Load less than 3" diameter
-```{r fig.height=10, fig.width=10}
-(
-  flt3_plot = ggplot(data = flt3, aes(x=Fuel_lt3500k, y=Fuel_lt32m)) +
+  flt3_plot_cc = ggplot(data = flt3_cc, aes(x=Fuel_lt3500k, y=Fuel_lt32m)) +
     geom_point(color="grey50", alpha=.5, size=.5, shape=21) +
     facet_wrap(~Priority + TxType) +
     geom_abline(intercept = 0, slope=1) +
@@ -151,14 +143,13 @@ ggsave("../figures/QMD20yr500kv2m.png", plot = qmd_plot, width = 10, height = 10
 
 ### Save
 ```{r}
-ggsave("../figures/Flt320yr500kv2m.png", plot = flt3_plot, width = 10, height = 10, units = c("in"), dpi = 600)
+ggsave("../figures/Flt3_2039_500kv2m_CC.png", plot = flt3_plot_cc, width = 10, height = 10, units = c("in"), dpi = 600)
 ```
 
-
-## Fuel Load 3-6" diameter
+## Fuel Load less than 3" diameter SC
 ```{r fig.height=10, fig.width=10}
-( 
-  f3to6_plot = ggplot(data = f3to6, aes(x=Fuel_3to6500k, y=Fuel_3to62m)) +
+(
+  flt3_plot_sc = ggplot(data = flt3_sc, aes(x=Fuel_lt3500k, y=Fuel_lt32m)) +
     geom_point(color="grey50", alpha=.5, size=.5, shape=21) +
     facet_wrap(~Priority + TxType) +
     geom_abline(intercept = 0, slope=1) +
@@ -166,34 +157,12 @@ ggsave("../figures/Flt320yr500kv2m.png", plot = flt3_plot, width = 10, height = 
     theme(aspect.ratio=1) +
     
     stat_smooth(method=lm, formula= (y ~ x), fullrange=TRUE) +
-    labs(x="500k Fuel loads 3-6” diameter (mt/ac)", y= "2m Fuel loads 3-6” diameter (mt/ac)")
+    labs(x="500k Fuel loads <3” diameter (mt/ac)", y= "2m Fuel loads <3” diameter (mt/ac)")
 )
 ```
 
 ### Save
 ```{r}
-ggsave("../figures/F3to6at20yr500kv2m.png", plot = f3to6_plot, width = 10, height = 10, units = c("in"), dpi = 600)
+ggsave("../figures/Flt3_2039_500kv2m_SC.png", plot = flt3_plot_sc, width = 10, height = 10, units = c("in"), dpi = 600)
 ```
-
-## Fuel Load 6-12" diameter
-```{r fig.height=10, fig.width=10}
-( 
-  f6to12_plot = ggplot(data = f6to12, aes(x=Fuel_6to12500k, y=Fuel_6to122m)) +
-    geom_point(color="grey50", alpha=.5, size=.5, shape=21) +
-    facet_wrap(~Priority + TxType) +
-    geom_abline(intercept = 0, slope=1) +
-    theme_bw() +
-    theme(aspect.ratio=1) +
-    
-    stat_smooth(method=lm, formula= (y ~ x), fullrange=TRUE) +
-    labs(x="500k Fuel loads 6-12” diameter (mt/ac)", y= "2m Fuel loads 6-12” diameter (mt/ac)")
-)
-```
-
-### Save
-```{r}
-ggsave("../figures/F6to12at20yr500kv2m.png", plot = f6to12_plot, width = 10, height = 10, units = c("in"), dpi = 600)
-```
-
-
 
