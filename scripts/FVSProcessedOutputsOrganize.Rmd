@@ -73,15 +73,15 @@ names(huc)
                 ifelse(regionName == "North Coast Region" , "NC",
               ifelse(regionName == "South Coast Region" , "SC", 
                     ifelse(regionName == "Central Coast Region" , "CC", "NA"))))) %>%
-    mutate(timeWui= ifelse(wuiGroup == 25, "yr1to5_16to20",
-                    ifelse(wuiGroup == 50 , "yr6to10",
-                    ifelse(wuiGroup == 75 , "yr11to15", "notTreated")))) %>%
-    mutate(timeFire = ifelse(fireGroup == 25, "yr1to5",
-                      ifelse(fireGroup == 50 , "yr6to10",
-                      ifelse(fireGroup == 75 , "yr11to15", "yr16to20")))) %>% 
-    mutate(timeHybrid = ifelse(hybridGroup == 25, "yr1to5",
-                    ifelse(hybridGroup == 50 , "yr6to10",
-                     ifelse(hybridGroup == 75 , "yr11to15", "yr16to20")))) %>%
+    mutate(timeWui= ifelse(wuiGroup == 25, "2024_yr1to5_16to20",
+                    ifelse(wuiGroup == 50 , "2029_yr6to10",
+                    ifelse(wuiGroup == 75 , "2034_yr11to15", "notTreated")))) %>%
+    mutate(timeFire = ifelse(fireGroup == 25, "2024_yr1to5",
+                      ifelse(fireGroup == 50 , "2029_yr6to10",
+                      ifelse(fireGroup == 75 , "2034_yr11to15", "2039_yr16to20")))) %>% 
+    mutate(timeHybrid = ifelse(hybridGroup == 25, "2024_yr1to5",
+                    ifelse(hybridGroup == 50 , "2029_yr6to10",
+                     ifelse(hybridGroup == 75 , "2034_yr11to15", "2039_yr16to20")))) %>%
   dplyr::select(huc12:hybridGroup, region:timeHybrid, geometry)
 )
 ```
@@ -440,8 +440,17 @@ dataFvs2 = dataFvs1 %>%
 unique(dataFvs2$Priority)
 unique(dataFvs2$Year)
 ```
+# Subset timing and Huc
+```{r}
+
+( timing = dataFvs2 %>% dplyr::select(huc12, region, Priority, Intensity, TxType, run, Year, timeFire, timeHybrid, timeWui) )
+```
 
 # Write Summary Table
 ```{r}
 write.csv(dataFvs2, "../outputs/fvs/FVSprocessedOutputsHucsScCcSnBase.csv", row.names = F)
+```
+
+```{r}
+write.csv(timing, "../outputs/fvs/HucTxTiming.csv", row.names = F)
 ```
