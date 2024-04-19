@@ -1,0 +1,151 @@
+---
+title: "Flame Length Severity"
+author: "Anna Talucci"
+date: "4/18/2024"
+output: html_document
+---
+
+
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
+# Overview
+
+Generate Flame Length Severity figure for FVS flame length SN Fire trt4.
+
+# Library
+```{r}
+library(tidyverse)
+library(sf)
+library(vroom)
+library(tidyr)
+```
+
+
+
+# HUC Data
+```{r}
+timing = read.csv("../data/fvs/HucTxTiming.csv")
+```
+
+```{r}
+timing
+```
+```{r}
+timeBase = timing %>% dplyr::select(huc12, region, Year, timeFire, timeHybrid, timeWui)
+```
+# Data Flame Severity
+```{r}
+list <- list.files(path="../data/fl_sev_CSVs/",pattern='csv$', full.names = TRUE)
+```
+
+```{r}
+list
+```
+
+```{r}
+names(list) <- tools::file_path_sans_ext(basename(list))
+```
+
+
+
+```{r}
+list[1] %>% read.csv()
+```
+
+# Functions
+
+Organize dataframe with file name information
+```{r}
+part1 <- function(list){
+  purrr::map(list, read.csv) %>%
+    map2(names(.), ~mutate(.x, Tx = .y)) %>%
+  bind_rows() %>%
+    separate(., Tx, into = c("run", "region", 'Priority', 'Intensity', 'TxType', 'extraName'), sep = '_', convert=TRUE, extra='merge') %>%
+    rename(huc12=HUC12)
+}
+
+```
+
+# Apply function to list
+```{r}
+df = part1(list)
+
+```
+
+
+
+
+## Subset HUCs
+```{r}
+( selectHucs = df %>% filter(huc12%in% c('180102040304', '180200030405',	'180201210802',	'180901020505',	'180201250901',	'180300030102',	'180300010101',	'180400090401'))
+)
+```
+
+180102040304	SN	50	Fire
+180200030405	SN	50	Fire
+180201210802	SN	75	Fire
+180901020505	SN	75	Fire
+180201250901	SN	25	fire
+180300030102	SN	25	fire
+180300010101	SN	100	fire
+180400090401	SN	100	fire
+
+180102040304, 180200030405,	180201210802,	180901020505,	180201250901,	180300030102,	180300010101,	180400090401,	
+
+## subset base and reorg columns
+```{r}
+( base = selectHucs %>% 
+    filter(region =="Baseline") %>%
+    dplyr::select(huc12, Year, FL_sev) %>%
+  mutate(run="Baseline",
+         region="SN",
+         Priority="Baseline",
+         Intensity = "Baseline",
+         TxType="Baseline") %>%
+    left_join(., timeBase, by=c('huc12', 'region', 'Year')) %>%
+    distinct()
+)
+```
+
+```{r}
+( tx = selectHucs %>% 
+     filter(region !="Baseline") %>%
+    dplyr::select(!extraName) %>%
+    left_join(., timing, by=c('huc12', 'region', 'Priority', 'Intensity', 'TxType', 'run', 'Year')) %>%
+    filter(Priority=="Fire") %>%
+    distinct()
+  
+) 
+```
+
+```{r}
+( df1 = bind_rows(tx, base) 
+)
+```
+# Define factor levels
+```{r}
+df1$Intensity = factor(df1$Intensity, levels=c("Baseline", "500k", "1m", "2m"))
+```
+
+# Figures
+
+```{r}
+( plot1 = ggplot(data = df1, aes(x=Year, y=FL_sev, color=Intensity)) +
+  geom_point() + 
+  geom_line() + 
+  facet_wrap(~ timeFire + huc12, ncol=2, scales = "free_y") +
+  scale_x_continuous(breaks=c(2024,2029,2034, 2039),
+        labels=c("2024", "2029", "2034", "2039")) +
+    labs(title="SN Fire trt4 Selected HUCs (Fl_sev from FVS)")
+)
+```
+
+```{r}
+ggsave("../figures/FvsFlameSeveritySN.jpg", plot=plot1, dpi=300, bg="white")
+```

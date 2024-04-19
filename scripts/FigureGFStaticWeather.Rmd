@@ -1,0 +1,177 @@
+---
+title: "Figure Gridfire Static Weather"
+author: "Anna Talucci"
+date: "4/19/2024"
+output: html_document
+---
+
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
+# Overview
+
+Generate time series figure flame length from gridfire with startic weather for SN select hucs
+
+# Library
+```{r}
+library(tidyverse)
+library(sf)
+library(vroom)
+library(tidyr)
+```
+
+
+
+# HUC Data
+```{r}
+timing = read.csv("../data/fvs/HucTxTiming.csv")
+```
+
+```{r}
+timing
+```
+```{r}
+timeBase = timing %>% dplyr::select(huc12, region, Year, timeFire, timeHybrid, timeWui)
+```
+
+# Data Flame Severity
+```{r}
+base = read.csv("../data/gridfire/staticWeather/SN_baseline_GF_avg_FL.csv")
+```
+
+
+```{r}
+tx = read.csv("../data/gridfire/staticWeather/SN_GF_avg_FL.csv")
+```
+
+
+```{r}
+base
+tx
+```
+
+```{r}
+tx %>% 
+    separate(., Scenario, into = c("run", "region", 'Priority', 'Intensity', 'TxType'), sep = '_', convert=TRUE) %>% 
+    separate(., HUC, into = c("HUC", "huc12"), sep = '_', convert=TRUE)
+```
+
+```{r}
+base %>% 
+    separate(., Scenario, into = c("run", "region", 'Priority', 'Intensity', 'TxType'), sep = '_', convert=TRUE) %>% 
+    separate(., HUC, into = c("HUC", "huc12"), sep = '_', convert=TRUE)
+```
+
+# Functions
+
+Organize dataframe with scenario information
+```{r}
+clean <- function(df){
+  df %>% 
+    separate(., Scenario, into = c("run", "region", 'Priority', 'Intensity', 'TxType'), sep = '_', convert=TRUE) %>% 
+    separate(., HUC, into = c("HUC", "huc12"), sep = '_', convert=TRUE) %>%
+    dplyr::select(!HUC)
+  
+}
+
+```
+
+# Apply function to list
+```{r}
+( base_clean = base %>% clean() )
+( tx_clean = tx %>% clean() )
+```
+
+```{r}
+unique(base_clean$huc12)
+unique(tx_clean$huc12)
+```
+
+# Add timing
+```{r}
+( fire = tx_clean %>% 
+  filter(Priority=="Fire") %>%
+    left_join(., timing, by=c('huc12', 'region', 'Priority', 'Intensity', 'TxType', 'run', 'Year')) %>%
+  drop_na(HA_FL) )
+```
+
+```{r}
+( baseTime = base_clean %>% 
+    left_join(., timeBase, by=c('huc12', 'region', 'Year')) %>%
+    distinct()
+)
+```
+## subset  by trt
+
+
+```{r}
+( trt1 = fire %>% filter(TxType =="trt1") ) 
+( trt4 = fire %>% filter(TxType =="trt4") ) 
+( trt6 = fire %>% filter(TxType =="trt6") ) 
+```
+
+```{r}
+( trt1_base = bind_rows(trt1, baseTime) )
+( trt4_base = bind_rows(trt4, baseTime) )
+( trt6_base = bind_rows(trt6, baseTime) )
+```
+# Define factor levels
+```{r}
+trt1_base$Intensity = factor(trt1_base$Intensity, levels=c("baseline", "500k", "1m", "2m"))
+
+trt4_base$Intensity = factor(trt4_base$Intensity, levels=c("baseline", "500k", "1m", "2m"))
+
+trt6_base$Intensity = factor(trt6_base$Intensity, levels=c("baseline", "500k", "1m", "2m"))
+```
+
+# Figures
+
+```{r}
+( trt1Plot = ggplot(data = trt1_base, aes(x=Year, y=HA_FL, color=Intensity)) +
+  geom_point() + 
+  geom_line() + 
+  facet_wrap(~ timeFire + huc12, ncol=2, scales = "free_y") +
+  scale_x_continuous(breaks=c(2024,2029,2034, 2039),
+        labels=c("2024", "2029", "2034", "2039")) +
+    labs(title="SN Fire trt1 Selected HUCs (GF Static weather)")
+)
+```
+
+```{r}
+ggsave("../figures/GfSnFireTrt1SelectHucStaticWeather.jpg", plot=trt1Plot, dpi=300, bg="white")
+```
+
+```{r}
+( trt4Plot = ggplot(data = trt4_base, aes(x=Year, y=HA_FL, color=Intensity)) +
+  geom_point() + 
+  geom_line() + 
+  facet_wrap(~ timeFire + huc12, ncol=2, scales = "free_y") +
+  scale_x_continuous(breaks=c(2024,2029,2034, 2039),
+        labels=c("2024", "2029", "2034", "2039")) +
+    labs(title="SN Fire trt4 Selected HUCs (GF Static weather)")
+)
+```
+
+```{r}
+ggsave("../figures/GfSnFireTrt4SelectHucStaticWeather.jpg", plot=trt4Plot, dpi=300, bg="white")
+```
+
+```{r}
+( trt6Plot = ggplot(data = trt6_base, aes(x=Year, y=HA_FL, color=Intensity)) +
+  geom_point() + 
+  geom_line() + 
+  facet_wrap(~ timeFire + huc12, ncol=2, scales = "free_y") +
+  scale_x_continuous(breaks=c(2024,2029,2034, 2039),
+        labels=c("2024", "2029", "2034", "2039")) +
+    labs(title="SN Fire trt6 Selected HUCs (GF Static weather)")
+)
+```
+
+```{r}
+ggsave("../figures/GfSnFireTrt6SelectHucStaticWeather.jpg", plot=trt6Plot, dpi=300, bg="white")
+```
