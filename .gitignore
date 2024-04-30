@@ -52,4 +52,4 @@ data/*
 outputs/*
 
 # Exclude html files in scripts folder from push to git
-scripts/**.html
+*.html
