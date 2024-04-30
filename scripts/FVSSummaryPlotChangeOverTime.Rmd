@@ -35,6 +35,16 @@ fvs = read_csv("../data/FVS/FVSprocessedOutputsHucsScCcSnBase.csv")
 fvs
 ```
 
+# Data inspect
+
+```{r}
+unique(fvs$Priority)
+unique(fvs$Intensity)
+unique(fvs$TxType)
+```
+
+# TSC Scenario
+
 ```{r}
 ( TSCScenario = fvs %>% 
   group_by(region, Priority, Intensity, TxType, Year) %>%

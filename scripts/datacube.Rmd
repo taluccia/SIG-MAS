@@ -21,13 +21,20 @@ library(cowplot)
 
 # Data
 Read in FVS HUC12 level data.
+read_csv("../data/datacube/datacube_weighted_20240205.csv")
 ```{r}
-df = read_csv("../data/datacube/datacube_weighted_20240205.csv")
+df = read_csv("../data/datacube/datacube_interim_sc_cc_20240328.csv")
 ```
 
 ```{r}
 df
 ```
+
+```{r}
+unique(df$Priority)
+unique(df$TxIntensity)
+```
+
 
 ```{r}
 sampleHucs = read_csv("../data/TxHucsQaQc/samplehucs.csv")
