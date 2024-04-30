@@ -42,8 +42,7 @@ vignettes/*.pdf
 # For Mac users computer specific files
 **/.DS_Store
 
-# Exclude html files in scripts folder
-scripts/*.html
+
 
 # exclude specific folders from push to github
 figures/*
@@ -51,3 +50,6 @@ images/*
 files/*
 data/*
 outputs/*
+
+# Exclude html files in scripts folder from push to git
+scripts/**.html
