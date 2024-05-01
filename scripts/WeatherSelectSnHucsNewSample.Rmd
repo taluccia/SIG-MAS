@@ -1,0 +1,197 @@
+---
+title: "WeatherForSNSelectHucs"
+author: "Anna Talucci"
+date: "4/30/2024"
+output: html_document
+---
+
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
+# Overview
+Generate json file for for select HUC for each time step. 
+
+Filter weather data extracted from EE. Join weather data to Hucs. 
+
+Hucs of interest
+180201250901 and 180201210802
+
+# Packages
+```{r}
+library('tidyverse')
+library('jsonlite')
+```
+
+# Data
+## CSV weather data
+output from GEE
+```{r}
+list <- list.files(path="../data/EE_WeatherData/timestep3544/sn", pattern='csv$', full.names = TRUE)
+```
+
+```{r}
+list
+```
+# Function to combine CSV
+## Combine, Clean, and organize
+```{r}
+combineCsv <- function(list){
+  purrr::map(list, read.csv) %>%
+  bind_rows() %>%
+    dplyr::select(-system.index, -.geo) 
+}
+```
+
+```{r}
+orgDf <- function(x) {
+  x %>%
+    pivot_longer(cols = starts_with("GF"),
+    names_to = "variable",
+    values_to = "value", 
+    values_drop_na = TRUE) %>%
+    separate(col=variable, into=c("model","scenario","date", "climate"), sep="_", fill="right")  %>%
+    pivot_wider(names_from = climate, values_from = value) %>%
+    mutate(tasmax = ((tasmax-273.15)*9/5+32)) %>%
+    mutate(ws = (ws*2.237)) %>%
+    rename(temperature=tasmax, relative.humidity=rhsmin, wind.speed.20ft=ws, wind.from.direction=wd) 
+}
+```
+
+```{r}
+temp <- function(x){
+  x %>% 
+    group_by(huc12) %>%
+    arrange(desc(temperature)) %>%
+    top_n(n=200)
+}
+```
+
+```{r}
+orgDf2 <- function(x){
+  x %>% mutate(foliar.moisture=82.2) %>%
+  dplyr::select(-RRK_Rgn, -model, -scenario) %>%
+    rename('relative-humidity'=relative.humidity, 'wind-from-direction'=wind.from.direction, 'wind-speed-20ft'=wind.speed.20ft, 'foliar-moisture'=foliar.moisture) %>%
+    arrange(date)
+    
+}
+
+```
+
+## Apply  functions
+
+```{r eval=FALSE, include=FALSE}
+list %>% combineCsv() %>% orgDf() %>% group_by(huc12) %>% summarize(n=n()) # for sample size 
+```
+```{r eval=FALSE, include=FALSE}
+list %>% combineCsv() %>% orgDf() 
+```
+
+
+
+```{r}
+df = list %>% combineCsv() %>% orgDf() %>% orgDf2() 
+```
+
+```{r}
+df
+```
+
+
+```{r}
+( huc901 = df %>% filter(huc12 == 180201250901) %>% arrange(desc(temperature)) %>% mutate(rowId = row_number()) )
+( huc802 = df %>% filter(huc12 ==180201210802) %>% arrange(desc(temperature)) %>% mutate(rowId = row_number()) )
+```
+
+## 1-200
+```{r eval=FALSE, include=FALSE}
+( df2 = df %>% 
+    filter(huc12 %in% c(180201250901, 180201210802)) %>% 
+    group_by(huc12) %>% 
+    arrange(desc(temperature)) %>% 
+    top_n(n=200, wt=temperature) )
+```
+
+```{r eval=FALSE, include=FALSE}
+( df2 = df %>% 
+    filter(huc12 %in% c(180201250901, 180201210802)) %>% 
+    group_by(huc12) %>% 
+    arrange(desc(`wind-speed-20ft`)) %>% 
+    top_n(n=200, wt=`wind-speed-20ft`) )
+```
+
+```{r eval=FALSE, include=FALSE}
+( df2 = df %>% 
+    filter(huc12 %in% c(180201250901, 180201210802)) %>% 
+    group_by(huc12) %>% 
+    arrange(desc(`relative-humidity`)) %>% 
+    top_n(n=-200, wt=`relative-humidity`) )
+```
+
+```{r eval=FALSE, include=FALSE}
+( df2 = df %>% 
+    filter(huc12 %in% c(180201250901, 180201210802)) %>% 
+    group_by(huc12) %>% 
+    arrange(desc(temperature)) %>% 
+  mutate(PCT = ntile(temperature, 100)) %>%
+    filter(PCT %in% 87:100) %>%
+    top_n(n=200, wt=temperature) 
+)
+```
+
+```{r eval=FALSE, include=FALSE}
+( df2 = df %>% 
+    filter(huc12 %in% c(180201250901, 180201210802)) %>% 
+    group_by(huc12) %>% 
+    arrange(desc(temperature)) %>% 
+  mutate(PCT = ntile(temperature, 100)) %>%
+    filter(PCT %in% 74:87) %>%
+    top_n(n=200, wt=temperature) 
+)
+```
+
+```{r eval=FALSE, include=FALSE}
+( df2 = df %>% 
+    filter(huc12 %in% c(180201250901, 180201210802)) %>% 
+    group_by(huc12) %>% 
+    arrange(desc(temperature)) %>% 
+  mutate(PCT = ntile(temperature, 100)) %>%
+    filter(PCT %in% 61:74) %>%
+    top_n(n=200, wt=temperature) 
+)
+```
+
+   
+```{r}
+( top200_huc901 = huc901 %>% top_n(n=200, wt=`wind-speed-20ft`) )
+( top200_huc901 = huc802 %>% top_n(n=200, wt=`wind-speed-20ft`) )
+```
+```{r}
+( huc901_1_200 = huc901 %>% filter(rowId %in% (1:200)) )
+( huc802_1_200 = huc802 %>% filter(rowId %in% (1:200)) )
+```
+
+# Json Function
+```{r}
+jsonFun <- function(x) {
+  huc12 = unique(x$huc12);
+x %>% arrange(date) %>%
+    ungroup() %>%
+  dplyr::select(-huc12, -date) %>%
+  jsonlite::toJSON(pretty = TRUE, auto_unbox = TRUE) %>%
+  write(., paste("../outputs/WeatherJsonHuc/WeatherJsonHucSelect/",huc12,'_2039.json'))
+  
+}
+```
+
+```{r}
+dflist = df2 %>% group_split(huc12) %>% set_names(df2$huc12 %>% unique %>% sort)
+```
+
+```{r}
+dflist %>% map_dfr(~ .x %>% jsonFun())
+```
