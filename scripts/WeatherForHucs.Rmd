@@ -15,7 +15,7 @@ options(scipen=999) #Prevent scientific notation of numeric values; use =0 to re
 
 # Overview
 Generate json file for for each HUC for each time step with top 200 temperature days per time step.
-Filter weather data extracted from EE. Join weather data to Hucs. Convert from .shp to .json.
+Filter weather data extracted from EE. Join weather data to Hucs. 
 
 Select daily weather based on 200 highest temperature days.
 
@@ -44,11 +44,6 @@ North Coast Region [774],
 Sierra Nevada Region [1148], 
 South Coast Region [480]
 
-# Global options
-prevent scientific notation; use =0 to reset
-```{r}
-options(scipen=999)
-```
 
 # Packages
 ```{r}
