@@ -14,6 +14,7 @@ options(scipen=999) #Prevent scientific notation of numeric values; use =0 to re
 ```
 
 # Overview
+
 Generate json file for for each HUC for each time step with top 200 temperature days per time step.
 Filter weather data extracted from EE. Join weather data to Hucs. 
 
@@ -44,20 +45,26 @@ North Coast Region [774],
 Sierra Nevada Region [1148], 
 South Coast Region [480]
 
+**UPDATES**
+2024 May 1 -> issue fix for converting wind speed from m/s to mph
+2024 May 1 -> issue fix for weighting top 200 temperatures for temp, old code was missing weighting factor resulting in larger spread.
+
+**SPECIAL NOTES**
+*Missing HUC due to centroid placement over water*
+* For SC Use values from 180701070002 for Huc 180701070003
+* For cc use values from 180600020804 for Huc 180600150305
 
 # Packages
 ```{r}
 library('tidyverse')
-
 library('jsonlite')
-
 ```
 
 # Data
 ## CSV weather data
 output from GEE
 ```{r}
-list <- list.files(path="../data/weather/timestep3544/sc", pattern='csv$', full.names = TRUE)
+list <- list.files(path="../data/EE_WeatherData/timestep2534/cc", pattern='csv$', full.names = TRUE)
 ```
 
 ```{r}
@@ -83,6 +90,7 @@ orgDf <- function(x) {
     separate(col=variable, into=c("model","scenario","date", "climate"), sep="_", fill="right")  %>%
     pivot_wider(names_from = climate, values_from = value) %>%
     mutate(tasmax = ((tasmax-273.15)*9/5+32)) %>%
+    mutate(ws = (ws*2.237)) %>%
     rename(temperature=tasmax, relative.humidity=rhsmin, wind.speed.20ft=ws, wind.from.direction=wd) 
 }
 ```
@@ -92,7 +100,7 @@ temp <- function(x){
   x %>% 
     group_by(huc12) %>%
     arrange(desc(temperature)) %>%
-    top_n(n=200)
+    top_n(n=200, wt=temperature) 
 }
 ```
 
@@ -109,10 +117,10 @@ orgDf2 <- function(x){
 
 ## Apply  functions
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 list %>% combineCsv() %>% orgDf() %>% group_by(huc12) %>% summarize(n=n()) # for sample size 
 ```
-```{r}
+```{r eval=FALSE, include=FALSE}
 list %>% combineCsv() %>% orgDf() 
 ```
 
@@ -141,7 +149,7 @@ x %>% arrange(date) %>%
     ungroup() %>%
   dplyr::select(-huc12, -date) %>%
   jsonlite::toJSON(pretty = TRUE, auto_unbox = TRUE) %>%
-  write(., paste("../outputs/WeatherJsonHuc/ts2034CC/",huc12,'_2034.json'))
+  write(., paste("../outputs/jsonHuc/ts2034CC/",huc12,'_2034.json'))
   
 }
 ```
@@ -149,11 +157,8 @@ x %>% arrange(date) %>%
 ```{r}
 dflist %>% map_dfr(~ .x %>% jsonFun())
 ```
-**NOTES:**
 
-*Missing HUC due to centroid placement over water*
-* For SC Use values from 180701070002 for Huc 180701070003
-* For cc use values from 180600020804 for Huc 180600150305
+
 
 
 **THE END**
