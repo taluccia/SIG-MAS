@@ -1,0 +1,667 @@
+---
+title: "Weather Data Summaries by Percentile"
+author: "Anna Talucci"
+date: "5/16/2024"
+output: html_document
+---
+
+
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
+# Overview
+Generate json file for for select HUC for each time step. 
+
+Filter weather data extracted from EE. Join weather data to Hucs. 
+
+Hucs of interest
+180201250901 and 180201210802
+
+# Packages
+```{r}
+library('tidyverse')
+```
+
+# Data
+```{r}
+percentiles1524 =read.csv(file = "../data/weather/percentile/weatherSN_2015_2024.csv", header = TRUE)
+percentiles2534 =read.csv(file = "../data/weather/percentile/weatherSN_2025_2034.csv", header = TRUE)
+percentiles3544 =read.csv(file = "../data/weather/percentile/weatherSN_2035_2044.csv", header = TRUE)
+```
+
+
+
+
+# Summarize by region basedon selections for HUCs
+
+```{r}
+( perct98regionAll1524 = percentiles1524 %>% ungroup()%>%
+  filter(tempPCT %in% c(98:100) | rhPCT %in% c(99:100) | wsPCT %in% c(99:100)) %>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              n = n()/1148,
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              #rh_n = n(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft))
+              #ws_n = n(wind.speed.20ft))
+)
+```
+
+```{r}
+percentiles1524 %>% 
+  ungroup()%>%
+  filter(wsPCT %in% c(99:100)) %>%
+  mutate(adjust_ws = (-0.005497*(wind.speed.20ft*wind.speed.20ft) + (1.241*wind.speed.20ft) + 2.491)) %>%
+  summarize(ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+            wsA_mean = mean(adjust_ws),
+              wsA_min = min(adjust_ws),
+              wsA_max = max(adjust_ws))
+```
+
+```{r}
+( top200regionTemp1524 = percentiles1524 %>% 
+  top_n(n=200, wt=temperature)  %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "top 200 percentile Temp", 
+           region = "sn",
+           years = "2015-2024")
+              
+)
+```
+
+```{r}
+( top200regionTemp2534 = percentiles2534 %>% 
+  top_n(n=200, wt=temperature)  %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "top 200 percentile Temp", 
+           region = "sn",
+           years = "2025-2034")
+              
+)
+```
+
+```{r}
+( top200regionTemp3544 = percentiles3544 %>% 
+  top_n(n=200, wt=temperature)  %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "top 200 percentile Temp", 
+           region = "sn",
+           years = "2035-2044")
+              
+)
+```
+
+```{r}
+( perct98regionTemp1524 = percentiles1524 %>% 
+  filter(tempPCT %in% c(98:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "98th percentile Temp", 
+           region = "sn",
+           years = "2015-2024")
+              
+)
+```
+
+```{r}
+( perct98regionTemp2534 = percentiles2534 %>% 
+  filter(tempPCT %in% c(98:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "98th percentile Temp", 
+           region = "sn",
+           years = "2025-2034")
+              
+)
+```
+
+```{r}
+( perct98regionTemp3544 = percentiles3544 %>% 
+  filter(tempPCT %in% c(98:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "98th percentile Temp", 
+           region = "sn",
+           years = "2035-2044")
+              
+)
+```
+
+```{r}
+( perct98regionRH1524 = percentiles1524 %>% 
+  filter(rhPCT %in% c(98:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "98th percentile RH", 
+           region = "sn", 
+           years = "2015-2024")
+              
+)
+```
+
+```{r}
+( perct98regionRH2534 = percentiles2534 %>% 
+  filter(rhPCT %in% c(98:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "98th percentile RH", 
+           region = "sn", 
+           years = "2025-2034")
+              
+)
+```
+
+```{r}
+( perct98regionRH3544 = percentiles3544 %>% 
+  filter(rhPCT %in% c(98:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "98th percentile RH", 
+           region = "sn", 
+           years = "2035-2044")
+              
+)
+```
+
+```{r}
+( perct98regionWS1524 = percentiles1524 %>% 
+  filter(wsPCT %in% c(98:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "98th percentile WS", 
+           region = "sn",
+           years = "2015-2024")
+              
+)
+```
+
+```{r}
+( perct98regionWS2534 = percentiles2534 %>% 
+  filter(wsPCT %in% c(98:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "98th percentile WS", 
+           region = "sn",
+           years = "2025-2034")
+              
+)
+```
+
+```{r}
+( perct98regionWS3544 = percentiles3544 %>% 
+  filter(wsPCT %in% c(98:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "98th percentile WS", 
+           region = "sn",
+           years = "2035-2044")
+              
+)
+```
+
+## 99th
+```{r}
+( perct99regionTemp1524 = percentiles1524 %>% 
+  filter(tempPCT %in% c(99:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "99th percentile Temp", 
+           region = "sn",
+           years = "2015-2024")
+              
+)
+```
+
+```{r}
+( perct99regionTemp2534 = percentiles2534 %>% 
+  filter(tempPCT %in% c(99:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "99th percentile Temp", 
+           region = "sn",
+           years = "2025-2034")
+              
+)
+```
+
+```{r}
+( perct99regionTemp3544 = percentiles3544 %>% 
+  filter(tempPCT %in% c(99:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "99th percentile Temp", 
+           region = "sn",
+           years = "2035-2044")
+              
+)
+```
+
+```{r}
+( perct99regionRH1524 = percentiles1524 %>% 
+  filter(rhPCT %in% c(99:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "99th percentile RH", 
+           region = "sn", 
+           years = "2015-2024")
+              
+)
+```
+
+```{r}
+( perct99regionRH2534 = percentiles2534 %>% 
+  filter(rhPCT %in% c(99:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "99th percentile RH", 
+           region = "sn", 
+           years = "2025-2034")
+              
+)
+```
+
+```{r}
+( perct99regionRH3544 = percentiles3544 %>% 
+  filter(rhPCT %in% c(99:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "99th percentile RH", 
+           region = "sn", 
+           years = "2035-2044")
+              
+)
+```
+
+```{r}
+( perct99regionWS1524 = percentiles1524 %>% 
+  filter(wsPCT %in% c(99:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "99th percentile WS", 
+           region = "sn",
+           years = "2015-2024")
+              
+)
+```
+
+```{r}
+( perct99regionWS2534 = percentiles2534 %>% 
+  filter(wsPCT %in% c(99:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "99th percentile WS", 
+           region = "sn",
+           years = "2025-2034")
+              
+)
+```
+
+```{r}
+( perct99regionWS3544 = percentiles3544 %>% 
+  filter(wsPCT %in% c(99:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "99th percentile WS", 
+           region = "sn",
+           years = "2035-2044")
+              
+)
+```
+
+# Combine Summary tables
+
+```{r}
+sumDF = bind_rows(top200regionTemp1524,top200regionTemp2534, top200regionTemp2534, perct98regionTemp1524, perct98regionTemp2534, perct98regionTemp3544, perct98regionRH1524, perct98regionRH2534, perct98regionRH3544, perct98regionWS1524, perct98regionWS2534, perct98regionWS3544, perct99regionTemp1524, perct99regionTemp2534, perct99regionTemp3544, perct99regionRH1524, perct99regionRH2534, perct99regionRH3544, perct99regionWS1524, perct99regionWS2534, perct99regionWS3544) %>% dplyr::select(years, region, sample, temp_mean, rh_mean, ws_mean, temp_min, temp_max, rh_min, rh_max, ws_min, ws_max, n)
+```
+
+```{r}
+sumDF
+```
+
+
+# Write summary to csv
+
+```{r}
+write.csv(sumDF, "../outputs/weatherSummaries/SnWeatherDataSummaries.csv", row.names = F)
+```
+
+# Adjust WS
+```{r}
+( aws1524 = percentiles1524 %>% 
+  ungroup()%>%
+  filter(wsPCT %in% c(99:100)) %>%
+  mutate(adjust_ws = (-0.005497*(wind.speed.20ft*wind.speed.20ft) + (1.241*wind.speed.20ft) + 2.491)) %>%
+  summarize(ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+            adj_ws_mean = mean(adjust_ws),
+            adj_ws_min = min(adjust_ws),
+            adj_ws_max = max(adjust_ws)) %>%
+  mutate(sample = "99th percentile WS", 
+           region = "sn",
+           years = "2015-2024")
+)
+```
+
+```{r}
+( aws2534 = percentiles2534 %>% 
+  ungroup()%>%
+  filter(wsPCT %in% c(99:100)) %>%
+  mutate(adjust_ws = (-0.005497*(wind.speed.20ft*wind.speed.20ft) + (1.241*wind.speed.20ft) + 2.491)) %>%
+  summarize(ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+            adj_ws_mean = mean(adjust_ws),
+            adj_ws_min = min(adjust_ws),
+            adj_ws_max = max(adjust_ws)) %>%
+  mutate(sample = "99th percentile WS", 
+           region = "sn",
+           years = "2025-2034")
+)
+```
+
+```{r}
+( aws3544 = percentiles3544 %>% 
+  ungroup()%>%
+  filter(wsPCT %in% c(99:100)) %>%
+  mutate(adjust_ws = (-0.005497*(wind.speed.20ft*wind.speed.20ft) + (1.241*wind.speed.20ft) + 2.491)) %>%
+  summarize(ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+            adj_ws_mean = mean(adjust_ws),
+            adj_ws_min = min(adjust_ws),
+            adj_ws_max = max(adjust_ws)) %>%
+  mutate(sample = "99th percentile WS", 
+           region = "sn",
+           years = "2035-2044")
+)
+```
+
+```{r}
+( aws1524_98 = percentiles1524 %>% 
+  ungroup()%>%
+  filter(wsPCT %in% c(98:100)) %>%
+  mutate(adjust_ws = (-0.005497*(wind.speed.20ft*wind.speed.20ft) + (1.241*wind.speed.20ft) + 2.491)) %>%
+  summarize(ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+            adj_ws_mean = mean(adjust_ws),
+            adj_ws_min = min(adjust_ws),
+            adj_ws_max = max(adjust_ws)) %>%
+  mutate(sample = "98th percentile WS", 
+           region = "sn",
+           years = "2015-2024")
+)
+```
+
+```{r}
+( aws2534_98 = percentiles2534 %>% 
+  ungroup()%>%
+  filter(wsPCT %in% c(98:100)) %>%
+  mutate(adjust_ws = (-0.005497*(wind.speed.20ft*wind.speed.20ft) + (1.241*wind.speed.20ft) + 2.491)) %>%
+  summarize(ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+            adj_ws_mean = mean(adjust_ws),
+            adj_ws_min = min(adjust_ws),
+            adj_ws_max = max(adjust_ws)) %>%
+  mutate(sample = "98th percentile WS", 
+           region = "sn",
+           years = "2025-2034")
+)
+```
+
+```{r}
+( aws3544_98 = percentiles3544 %>% 
+  ungroup()%>%
+  filter(wsPCT %in% c(98:100)) %>%
+  mutate(adjust_ws = (-0.005497*(wind.speed.20ft*wind.speed.20ft) + (1.241*wind.speed.20ft) + 2.491)) %>%
+  summarize(ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+            adj_ws_mean = mean(adjust_ws),
+            adj_ws_min = min(adjust_ws),
+            adj_ws_max = max(adjust_ws)) %>%
+  mutate(sample = "98th percentile WS", 
+           region = "sn",
+           years = "2035-2044")
+)
+```
+
+
+```{r}
+adjWsDF = bind_rows(aws1524, aws2534, aws3544, aws1524_98, aws2534_98, aws3544_98) %>% dplyr::select(years, region, sample, ws_mean, ws_min, ws_max,adj_ws_mean, adj_ws_min, adj_ws_max)
+```
+
+```{r}
+adjWsDF
+```
+
+
+```{r}
+write.csv(adjWsDF, "../outputs/weatherSummaries/SnAdjustedWS.csv", row.names = F)
+```
+
+
+# Summarize per huc
+```{r}
+( perct98 = percentiles %>% group_by(huc12) %>%
+  filter(tempPCT %in% c(98:100) | rhPCT %in% c(98:100) | wsPCT %in% c(99:100)) %>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              #temp_n = n(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              #rh_n = n(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft))
+              #ws_n = n(wind.speed.20ft))
+)
+```
