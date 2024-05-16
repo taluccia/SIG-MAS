@@ -1,0 +1,165 @@
+---
+title: "Weather data Organize"
+author: "Anna Talucci"
+date: "5/10/2024"
+output: html_document
+---
+
+
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
+# Overview
+Reorganized fromUpdated from WeatherForHucs.Rmd
+
+This scripts is an intermidiary step to generating json files for gridfire. It pulls in the weather data and combines into csv files for time step with conversions for wind, temperature, and additional percentile column for filtering.
+
+
+WInd adjustment -> -0.005497 x^2 + 1.241 x + 2.491.
+
+This script combines cvs and adds percentiles.
+
+
+
+
+HUCs per region
+
+Central Coast Region [435], 
+North Coast Region [774], 
+Sierra Nevada Region [1148], 
+South Coast Region [480]
+
+**UPDATES**
+2024 May 1 -> issue fix for converting wind speed from m/s to mph
+2024 May 1 -> issue fix for weighting top 200 temperatures for temp, old code was missing weighting factor resulting in larger spread.
+2024 May 9 -> weighting and 98th percentile
+
+**SPECIAL NOTES**
+*Missing HUC due to centroid placement over water*
+* For SC Use values from 180701070002 for Huc 180701070003
+* For cc use values from 180600020804 for Huc 180600150305
+
+# Packages
+```{r}
+library('tidyverse')
+library('jsonlite')
+```
+
+# Data
+## CSV weather data
+output from GEE
+```{r}
+list1524 <- list.files(path="../data/EE_WeatherData/timestep1524/sn", pattern='csv$', full.names = TRUE)
+```
+
+```{r}
+list1524
+```
+
+```{r}
+list2534 <- list.files(path="../data/EE_WeatherData/timestep2534/sn", pattern='csv$', full.names = TRUE)
+```
+
+```{r}
+list2534
+```
+
+```{r}
+list3544 <- list.files(path="../data/EE_WeatherData/timestep3544/sn", pattern='csv$', full.names = TRUE)
+```
+
+```{r}
+list3544
+```
+
+# Function to combine CSV
+## Combine, Clean, and organize
+```{r}
+combineCsv <- function(list){
+  purrr::map(list, read.csv) %>%
+  bind_rows() %>%
+    dplyr::select(-system.index, -.geo) 
+}
+```
+
+```{r}
+orgDf <- function(x) {
+  x %>%
+    pivot_longer(cols = starts_with("GF"),
+    names_to = "variable",
+    values_to = "value", 
+    values_drop_na = TRUE) %>%
+    separate(col=variable, into=c("model","scenario","date", "climate"), sep="_", fill="right")  %>%
+    pivot_wider(names_from = climate, values_from = value) %>%
+    mutate(tasmax = ((tasmax-273.15)*9/5+32)) %>%
+    mutate(ws = (ws*2.237)/1.15) %>% # m/s to mph; 10-m to 20ft
+    rename(temperature=tasmax, relative.humidity=rhsmin, wind.speed.20ft=ws, wind.from.direction=wd) 
+}
+```
+
+
+
+
+
+
+# Apply functions
+
+```{r}
+df1524 = list1524 %>% combineCsv() %>% orgDf() #%>% temp() %>% orgDf2() 
+```
+```{r}
+df2534 = list2534 %>% combineCsv() %>% orgDf() #%>% temp() %>% orgDf2() 
+```
+
+```{r}
+df3544 = list3544 %>% combineCsv() %>% orgDf() #%>% temp() %>% orgDf2() 
+```
+
+```{r}
+df1524
+df2534
+df3544
+```
+```{r}
+min(df1524$wind.speed.20ft)
+max(df1524$wind.speed.20ft)
+mean(df1524$wind.speed.20ft)
+```
+# Add percentile groups
+```{r}
+( percentiles1524 = df1524 %>% group_by(huc12) %>%
+  mutate(tempPCT = ntile(temperature, 100),
+         rhPCT = ntile(-relative.humidity, 100),
+         wsPCT = ntile(wind.speed.20ft, 100)) %>% 
+  arrange(desc(rhPCT))) 
+```
+
+```{r}
+( percentiles2534 = df2534 %>% group_by(huc12) %>%
+  mutate(tempPCT = ntile(temperature, 100),
+         rhPCT = ntile(-relative.humidity, 100),
+         wsPCT = ntile(wind.speed.20ft, 100)) %>% 
+  arrange(desc(rhPCT))) 
+```
+
+```{r}
+( percentiles3544 = df3544 %>% group_by(huc12) %>%
+  mutate(tempPCT = ntile(temperature, 100),
+         rhPCT = ntile(-relative.humidity, 100),
+         wsPCT = ntile(wind.speed.20ft, 100)) %>% 
+  arrange(desc(rhPCT))) 
+```
+
+# Write to csv
+
+```{r}
+write.csv(percentiles1524, "../outputs/weather/percentiles/weatherSN_2015_2024.csv", row.names = F)
+write.csv(percentiles2534, "../outputs/weather/percentiles/weatherSN_2025_2034.csv", row.names = F)
+write.csv(percentiles3544, "../outputs/weather/percentiles/weatherSN_2035_2044.csv", row.names = F)
+```
+
