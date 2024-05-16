@@ -1,0 +1,147 @@
+---
+title: "Weather Select and Org for Gridfire"
+author: "Anna Talucci"
+date: "5/16/2024"
+output: html_document
+---
+
+
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+```{r globalOptions, include=FALSE}
+options(scipen=999) #Prevent scientific notation of numeric values; use =0 to reset
+```
+
+# Overview
+Generate json file for for select HUC for each time step. 
+
+Filter weather data extracted from EE. Join weather data to Hucs. 
+
+Required Naming convention for GridFire 
+temperature
+relative-humidity
+wind-speed-20ft
+wind-from-direction
+foliar-moisture
+fuel-moisture
+dead
+1hr
+10hr
+100hr
+live
+herbaceous
+woody
+# Packages
+```{r}
+library('tidyverse')
+library('jsonlite')
+```
+
+
+# Data
+```{r}
+percentiles1524 =read.csv(file = "../data/weather/percentile/weatherSN_2015_2024.csv", header = TRUE)
+percentiles2534 =read.csv(file = "../data/weather/percentile/weatherSN_2025_2034.csv", header = TRUE)
+percentiles3544 =read.csv(file = "../data/weather/percentile/weatherSN_2035_2044.csv", header = TRUE)
+```
+
+
+# Filter 98th percentile per time step per variable
+
+## Temperature
+```{r}
+( perct98regionTemp1524 = percentiles1524 %>% 
+    group_by(huc12) %>% 
+  filter(tempPCT %in% c(98:100)) %>%
+    arrange(desc(temperature))
+    
+              
+)
+```
+
+```{r}
+( perct98regionTemp2534 = percentiles2534 %>% 
+  filter(tempPCT %in% c(98:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "98th percentile Temp", 
+           region = "sn",
+           years = "2025-2034")
+              
+)
+```
+
+```{r}
+( perct98regionTemp3544 = percentiles3544 %>% 
+  filter(tempPCT %in% c(98:100)) %>%
+    ungroup()%>%
+    summarize(temp_mean = mean(temperature),
+              temp_min = min(temperature),
+              temp_max = max(temperature),
+              rh_mean = mean(relative.humidity), 
+              rh_min = min(relative.humidity), 
+              rh_max = max(relative.humidity), 
+              ws_mean = mean(wind.speed.20ft),
+              ws_min = min(wind.speed.20ft),
+              ws_max = max(wind.speed.20ft),
+              n = n()/1148) %>%
+    mutate(sample = "98th percentile Temp", 
+           region = "sn",
+           years = "2035-2044")
+              
+)
+```
+
+
+# Function for rename and final column selection
+```{r}
+orgDf2 <- function(x){
+  x %>% mutate(foliar.moisture=82.2) %>%
+  dplyr::select(-RRK_Rgn, -model, -scenario) %>%
+    rename('relative-humidity'=relative.humidity, 'wind-from-direction'=wind.from.direction, 'wind-speed-20ft'=wind.speed.20ft, 'foliar-moisture'=foliar.moisture) %>%
+    arrange(date)
+    
+}
+
+```
+
+
+```{r}
+( df2 = rh_top1 %>% 
+  full_join(., temp_top1, by = c("huc12", "rowId")) %>% 
+  full_join(., wind_top1, by = c("huc12", "rowId")) %>%
+  select(-rowId)
+)
+```
+
+# Json Function
+```{r}
+jsonFun <- function(x) {
+  huc12 = unique(x$huc12);
+x %>% arrange(date) %>%
+    ungroup() %>%
+  dplyr::select(-huc12, -date) %>%
+  jsonlite::toJSON(pretty = TRUE, auto_unbox = TRUE) %>%
+  write(., paste("../outputs/WeatherJsonHuc/WeatherJsonHucSelect/",huc12,'_2039.json'))
+  
+}
+```
+
+```{r}
+dflist = df2 %>% group_split(huc12) %>% set_names(df2$huc12 %>% unique %>% sort)
+```
+
+```{r}
+dflist %>% map_dfr(~ .x %>% jsonFun())
+```
