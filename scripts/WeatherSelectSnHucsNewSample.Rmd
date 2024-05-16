@@ -106,30 +106,38 @@ df
 ( huc901 = df %>% filter(huc12 == 180201250901) %>% arrange(desc(temperature)) %>% mutate(rowId = row_number()) )
 ( huc802 = df %>% filter(huc12 ==180201210802) %>% arrange(desc(temperature)) %>% mutate(rowId = row_number()) )
 ```
+```{r}
+( top200_huc901 = huc901 %>% top_n(n=200, wt=`wind-speed-20ft`) )
+( top200_huc901 = huc802 %>% top_n(n=200, wt=`wind-speed-20ft`) )
+```
+```{r}
+( huc901_1_200 = huc901 %>% filter(rowId %in% (1:200)) )
+( huc802_1_200 = huc802 %>% filter(rowId %in% (1:200)) )
+```
 
-## 1-200
-```{r eval=FALSE, include=FALSE}
-( df2 = df %>% 
+## Filters for subset weather
+```{r}
+( temp_top = df %>% 
     filter(huc12 %in% c(180201250901, 180201210802)) %>% 
     group_by(huc12) %>% 
     arrange(desc(temperature)) %>% 
-    top_n(n=200, wt=temperature) )
+    top_n(n=1000, wt=temperature) )
 ```
 
-```{r eval=FALSE, include=FALSE}
-( df2 = df %>% 
+```{r}
+( wind_top = df %>% 
     filter(huc12 %in% c(180201250901, 180201210802)) %>% 
     group_by(huc12) %>% 
     arrange(desc(`wind-speed-20ft`)) %>% 
-    top_n(n=200, wt=`wind-speed-20ft`) )
+    top_n(n=1000, wt=`wind-speed-20ft`) )
 ```
 
-```{r eval=FALSE, include=FALSE}
-( df2 = df %>% 
+```{r}
+( rh_top = df %>% 
     filter(huc12 %in% c(180201250901, 180201210802)) %>% 
     group_by(huc12) %>% 
     arrange(desc(`relative-humidity`)) %>% 
-    top_n(n=-200, wt=`relative-humidity`) )
+    top_n(n=-1000, wt=`relative-humidity`) )
 ```
 
 ```{r eval=FALSE, include=FALSE}
@@ -165,16 +173,21 @@ df
 )
 ```
 
+# Create data
+```{r}
+temp_top1 = temp_top %>% select(huc12, temperature) %>% arrange(desc(temperature)) %>% mutate(rowId = row_number())
+wind_top1 = wind_top %>% select(huc12,`wind-from-direction`, `wind-speed-20ft`, `foliar-moisture`) %>% arrange(desc(`wind-speed-20ft`)) %>% mutate(rowId = row_number())
+rh_top1 = rh_top %>% select(huc12, date, `relative-humidity`) %>% arrange((`relative-humidity`)) %>% mutate(rowId = row_number())
+
+```
    
 ```{r}
-( top200_huc901 = huc901 %>% top_n(n=200, wt=`wind-speed-20ft`) )
-( top200_huc901 = huc802 %>% top_n(n=200, wt=`wind-speed-20ft`) )
+( df2 = rh_top1 %>% 
+  full_join(., temp_top1, by = c("huc12", "rowId")) %>% 
+  full_join(., wind_top1, by = c("huc12", "rowId")) %>%
+  select(-rowId)
+)
 ```
-```{r}
-( huc901_1_200 = huc901 %>% filter(rowId %in% (1:200)) )
-( huc802_1_200 = huc802 %>% filter(rowId %in% (1:200)) )
-```
-
 # Json Function
 ```{r}
 jsonFun <- function(x) {
